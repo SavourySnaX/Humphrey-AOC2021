@@ -1,0 +1,267 @@
+using System::Types
+
+[C_CALLING_CONVENTION]
+LoadTextFile:(filename:*Int8)(data:*Int8)
+
+bool:bit
+{
+    false:=0
+    true:=1
+}
+
+IsAsciiNumberCharacter:(char:Int8)(answer:bit)=
+{
+    answer = (char>=0x30) && (char<=0x39);
+}
+
+LoadIntFile:(filename:*Int8)(array:*Int32,cnt:Int32)=
+{
+    nullTerminated:=LoadTextFile(filename);
+    # Absolute donkey doo
+
+    list:=BeginIntList().list;
+    numInts:Int32=0;
+    tInt:Int32=0;
+    lastValid:=bool.false;
+    while ((*nullTerminated)!=0)
+    {
+        char:=*nullTerminated;
+        if (IsAsciiNumberCharacter(char))
+        {
+            lastValid=bool.true;
+            tInt=tInt*10;
+            tInt=tInt+(char-0x30);
+        }
+        else
+        {
+            if (lastValid==bool.true)
+            {
+                AppendIntList(&list,tInt);
+                tInt=0;
+            }
+            lastValid=bool.false;
+        }
+        nullTerminated++;
+    }
+
+    cnt=list.size;
+    array=IntListToArray(list).array;
+}
+
+Day1:()()=
+{
+    Day1_Part1();
+    Day1_Part2();
+}
+
+Day1_Part1:()()=
+{
+    filename:="day1.txt";
+    intArray:=LoadIntFile((&filename[0]) as *Int8);
+    
+    a:Int32=_;
+    prevCnt:=intArray.array[0];
+    totalIncrements:Int32=0;
+    for a=1..intArray.cnt
+    {
+        if (prevCnt < intArray.array[a])
+        {
+            totalIncrements++;
+        }
+        prevCnt=intArray.array[a];
+    }
+
+    msg:="Part1: Total Increments %0";
+    PrintMessage1(&msg[0] as *UInt8, totalIncrements);
+}
+
+Day1_Part2:()()=
+{
+    filename:="day1.txt";
+    intArray:=LoadIntFile((&filename[0]) as *Int8);
+    
+    window:[4]Int32=0;
+
+    a:Int32=_;
+    totalIncrements:Int32=0;
+    window[0]=intArray.array[0];
+    window[1]=intArray.array[1];
+    window[2]=intArray.array[2];
+    sumP:=intArray.array[0]+window[1]+window[2];
+    for a=3..intArray.cnt
+    {
+        window[3]=intArray.array[a];
+        sumV:=window[1]+window[2]+window[3];
+        if (sumP < sumV)
+        {
+            totalIncrements++;
+        }
+        sumP=sumV;
+        window[1]=window[2];
+        window[2]=window[3];
+    }
+
+    msg:="Part2: Total Sliding Increments %0";
+    PrintMessage1(&msg[0] as *UInt8, totalIncrements);
+}
+
+
+
+
+
+
+
+
+
+
+
+###########
+
+
+void:
+{
+}
+
+[C_CALLING_CONVENTION]
+AllocateHeap:(size:UInt64)(allocated:*void)
+
+##### List Stuff
+
+IntListNode:
+{
+    next:*IntListNode
+    data:Int32
+}
+
+IntList:
+{
+    head:*IntListNode
+    size:Int32
+}
+
+NullListNode:=0 as *IntListNode
+
+BeginIntList:()(list:IntList)=
+{
+    list=0;
+    list.head=NullListNode;
+    list.size=0;
+}
+
+AppendIntList:(list:*IntList,int:Int32)()=
+{
+    toAllocate:IntListNode=_;
+    newNode:=AllocateHeap(MemorySizeOf(toAllocate).size) as *IntListNode;
+    newNode.next=NullListNode;
+    newNode.data=int;
+
+    if list.head == NullListNode
+    {
+        list.head = newNode;
+    }
+    else
+    {
+        tHead:=list.head;
+        while (tHead.next!=NullListNode)
+        {
+            tHead=tHead.next;
+        }
+        tHead.next=newNode;
+    }
+    list.size++;
+}
+
+IntListToArray:(list:IntList)(array:*Int32)=
+{
+    a:Int32=_;
+    toAllocate:Int32=_;
+    array=AllocateHeap(MemorySizeOf(toAllocate).size * list.size) as *Int32;
+
+    tHead:=list.head;
+    for a=0..list.size
+    {
+        array[a]=tHead.data;
+        tHead=tHead.next;
+    }
+}
+
+
+#### Printing
+
+debugScratchBuffer:[4096]UInt8=_
+
+Debug_hex:="0123456789ABCDEF"
+
+DebugFormatXNybblesAtPtr:(value:UInt64, ptr:*UInt8, numNybbles:UInt64)(nullPos:*UInt8)=
+{
+    nullPos = DebugFormatXNybblesAtPtrNoNull(value, ptr, numNybbles).nullPos;
+    *nullPos=0;
+}
+
+DebugFormatXNybblesAtPtrNoNull:(value:UInt64, ptr:*UInt8, numNybbles:UInt64)(nullPos:*UInt8)=
+{
+    start:=ptr;
+    a:UInt32=_;
+    value=value[-(4*(16-numNybbles))..];    # pre rotate so we read the correct values
+    for a = 0 .. numNybbles
+    {
+        value=value[-4..];
+        nibble:=value[0..3];
+        first:=Debug_hex[nibble];
+        *ptr++=first;
+    }
+    nullPos=ptr;
+}
+
+[C_CALLING_CONVENTION]
+PrintMessageC:(msg:*UInt8)()
+
+PrintMsgArray:(message:*UInt8,params:*UInt64)()=
+{
+    tBuffer:[4096]UInt8=_;
+    ptr:=&tBuffer[0] as *UInt8;
+    start:=ptr;    
+    state:UInt32=0;
+    
+    while (*message) != 0
+    {
+        if state == 0   # Regular print
+        {
+            if (*message) == 0x25     # '%' (revisit humphrey string support completely)
+            {
+                state=1;  
+                message++;
+            }   
+            else
+            {
+                *ptr++=*message++;
+            }
+        }   
+        else
+        {
+            if state==1
+            {
+                #Read Param:Nybble count
+                paramIdx:= (*message++)-0x30;     # '0'
+                nybbleCnt:UInt64=16;
+                if (*message)== 0x3A              # ':'
+                {
+                    message++;
+                    nybbleCnt= (*message++)-0x30;    # '0'
+                }
+                ptr = DebugFormatXNybblesAtPtr(params[paramIdx],ptr,nybbleCnt);
+                state=0;
+            }
+        }
+    }
+    *ptr=0;
+    
+    PrintMessageC(start);
+}
+ 
+PrintMessage1:(message:*UInt8,p0:UInt64)()=
+{
+    params:[1]UInt64=_;
+    params[0]=p0;
+    PrintMsgArray(message,&params[0] as *UInt64);
+}
