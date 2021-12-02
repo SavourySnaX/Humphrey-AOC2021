@@ -1,7 +1,9 @@
 using System::Types
 using Days::Day1
+using Days::Day2
 
 Days:()()=
 {
     Day1();
+    Day2();
 }

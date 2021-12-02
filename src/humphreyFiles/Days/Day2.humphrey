@@ -1,0 +1,154 @@
+using System::Types
+using Support::Printing
+using Support::IO
+using Support::IntList
+
+MoveToken:Int32
+{
+    Forward:=-1
+    Up:=-2
+    Down:=-3
+}
+
+Day2:()()=
+{
+    Day2_Part1();
+    Day2_Part2();
+}
+
+Day2_Part1:()()=
+{
+    filename:="day2.txt";
+    intArray:=ParseMoveFile((&filename[0]) as *Int8);
+    
+    a:Int32=_;
+    x,y:Int32=0;
+    for a=0..intArray.cnt/2
+    {
+        token:=intArray.array[a*2+0];
+        value:=intArray.array[a*2+1];
+
+        if token == MoveToken.Forward
+        {
+            x=x+value;
+        }
+        if token == MoveToken.Up
+        {
+            y=y-value;
+        }
+        if token == MoveToken.Down
+        {
+            y=y+value;
+        }
+    }
+
+    msg:="Part1: Final Position %0,%1 - Multiplied %2";
+    PrintMessage3(&msg[0] as *UInt8, x,y, x*y);
+}
+
+Day2_Part2:()()=
+{
+    filename:="day2.txt";
+    intArray:=ParseMoveFile((&filename[0]) as *Int8);
+    
+    a:Int32=_;
+    x,y,aim:Int32=0;
+    for a=0..intArray.cnt/2
+    {
+        token:=intArray.array[a*2+0];
+        value:=intArray.array[a*2+1];
+
+        if token == MoveToken.Forward
+        {
+            x=x+value;
+            y=y+aim*value;
+        }
+        if token == MoveToken.Up
+        {
+            aim=aim-value;
+        }
+        if token == MoveToken.Down
+        {
+            aim=aim+value;
+        }
+    }
+
+    msg:="Part1: Final Position %0,%1 - Multiplied %2";
+    PrintMessage3(&msg[0] as *UInt8, x,y, x*y);
+}
+
+ParseState:Int8
+{
+    StartOfLine:=0
+    WaitForNum:=1
+    ParseNum:=2
+    WaitForStartOfLine:=3
+}
+
+ParseMoveFile:(filename:*Int8)(array:*Int32,cnt:Int32)=
+{
+    nullTerminated:=LoadTextFile(filename);
+    # Assumes no errors in the file
+
+    list:=BeginIntList().list;
+    numInts:Int32=0;
+    tInt:Int32=0;
+    state:=ParseState.StartOfLine;
+
+    while ((*nullTerminated)!=0)
+    {
+        char:=*nullTerminated;
+        if state==ParseState.WaitForStartOfLine
+        {
+            if (IsAsciiLowerCaseCharacter(char))
+            {
+                state=ParseState.StartOfLine;
+            }
+        }
+        if state==ParseState.StartOfLine
+        {
+            # Character to token
+            if char == 0x66             # f
+            {
+                AppendIntList(&list, MoveToken.Forward);
+            }
+            if char == 0x75             # u
+            {
+                AppendIntList(&list, MoveToken.Up);
+            }
+            if char == 0x64             # d
+            {
+                AppendIntList(&list, MoveToken.Down);
+            }
+            state=ParseState.WaitForNum;
+        }
+        if state==ParseState.WaitForNum
+        {
+            if (IsAsciiNumberCharacter(char))
+            {
+                tInt=0;
+                state=ParseState.ParseNum;
+            }
+        }
+        if state==ParseState.ParseNum
+        {
+            if (IsAsciiNumberCharacter(char))
+            {
+                tInt=tInt*10;
+                tInt=tInt+(char-0x30);
+            }
+            else
+            {
+                AppendIntList(&list,tInt);
+                state=ParseState.WaitForStartOfLine;
+            }
+        }
+        nullTerminated++;
+    }
+
+    cnt=list.size;
+    array=IntListToArray(list).array;
+}
+
+
+

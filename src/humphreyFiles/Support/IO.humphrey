@@ -10,6 +10,11 @@ IsAsciiNumberCharacter:(char:Int8)(answer:bit)=
     answer = (char>=0x30) && (char<=0x39);
 }
 
+IsAsciiLowerCaseCharacter:(char:Int8)(answer:bit)=
+{
+    answer = (char>=0x61) && (char<=0x7A);
+}
+
 LoadIntFile:(filename:*Int8)(array:*Int32,cnt:Int32)=
 {
     nullTerminated:=LoadTextFile(filename);
