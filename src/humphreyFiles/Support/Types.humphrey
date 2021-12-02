@@ -1,0 +1,7 @@
+
+Bool:bit
+{
+    False:=0
+    True:=1
+}
+

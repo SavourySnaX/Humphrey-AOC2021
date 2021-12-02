@@ -12,7 +12,8 @@ char* LoadTextFile(const char* name)
     FILE* f = fopen(name,"rb");
     fseek(f,0,SEEK_END);
     int size = ftell(f);
-    char* fileData = (char*)malloc(size);
+    char* fileData = (char*)malloc(size+1);
+    fileData[size]=0;
     fseek(f,0,SEEK_SET);
 
     fread(fileData,1,size,f);
@@ -21,7 +22,7 @@ char* LoadTextFile(const char* name)
     return fileData;
 }
 
-void Day1();
+void Days();
 
 void PrintMessageC(const char* msg)
 {
@@ -30,5 +31,5 @@ void PrintMessageC(const char* msg)
 
 int main(int argc,char** argv)
 {
-    Day1();
+    Days();
 }

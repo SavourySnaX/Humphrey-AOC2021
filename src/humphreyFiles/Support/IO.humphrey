@@ -1,0 +1,46 @@
+using System::Types
+using Support::Types
+using Support::IntList
+
+[C_CALLING_CONVENTION]
+LoadTextFile:(filename:*Int8)(data:*Int8)
+
+IsAsciiNumberCharacter:(char:Int8)(answer:bit)=
+{
+    answer = (char>=0x30) && (char<=0x39);
+}
+
+LoadIntFile:(filename:*Int8)(array:*Int32,cnt:Int32)=
+{
+    nullTerminated:=LoadTextFile(filename);
+    # Absolute donkey doo
+
+    list:=BeginIntList().list;
+    numInts:Int32=0;
+    tInt:Int32=0;
+    lastValid:=Bool.False;
+    while ((*nullTerminated)!=0)
+    {
+        char:=*nullTerminated;
+        if (IsAsciiNumberCharacter(char))
+        {
+            lastValid=Bool.True;
+            tInt=tInt*10;
+            tInt=tInt+(char-0x30);
+        }
+        else
+        {
+            if (lastValid==Bool.True)
+            {
+                AppendIntList(&list,tInt);
+                tInt=0;
+            }
+            lastValid=Bool.False;
+        }
+        nullTerminated++;
+    }
+
+    cnt=list.size;
+    array=IntListToArray(list).array;
+}
+

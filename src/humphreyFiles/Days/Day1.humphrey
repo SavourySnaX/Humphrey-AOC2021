@@ -1,0 +1,61 @@
+using System::Types
+using Support::Printing
+using Support::IO
+
+Day1:()()=
+{
+    Day1_Part1();
+    Day1_Part2();
+}
+
+Day1_Part1:()()=
+{
+    filename:="day1.txt";
+    intArray:=LoadIntFile((&filename[0]) as *Int8);
+    
+    a:Int32=_;
+    prevCnt:=intArray.array[0];
+    totalIncrements:Int32=0;
+    for a=1..intArray.cnt
+    {
+        if (prevCnt < intArray.array[a])
+        {
+            totalIncrements++;
+        }
+        prevCnt=intArray.array[a];
+    }
+
+    msg:="Part1: Total Increments %0";
+    PrintMessage1(&msg[0] as *UInt8, totalIncrements);
+}
+
+Day1_Part2:()()=
+{
+    filename:="day1.txt";
+    intArray:=LoadIntFile((&filename[0]) as *Int8);
+    
+    window:[4]Int32=0;
+
+    a:Int32=_;
+    totalIncrements:Int32=0;
+    window[0]=intArray.array[0];
+    window[1]=intArray.array[1];
+    window[2]=intArray.array[2];
+    sumP:=intArray.array[0]+window[1]+window[2];
+    for a=3..intArray.cnt
+    {
+        window[3]=intArray.array[a];
+        sumV:=window[1]+window[2]+window[3];
+        if (sumP < sumV)
+        {
+            totalIncrements++;
+        }
+        sumP=sumV;
+        window[1]=window[2];
+        window[2]=window[3];
+    }
+
+    msg:="Part2: Total Sliding Increments %0";
+    PrintMessage1(&msg[0] as *UInt8, totalIncrements);
+}
+

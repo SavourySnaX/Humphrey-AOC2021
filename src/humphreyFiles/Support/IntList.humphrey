@@ -1,0 +1,61 @@
+using System::Types
+using Support::Memory
+
+IntListNode:
+{
+    next:*IntListNode
+    data:Int32
+}
+
+IntList:
+{
+    head:*IntListNode
+    size:Int32
+}
+
+NullListNode:=0 as *IntListNode
+
+BeginIntList:()(list:IntList)=
+{
+    list=0;
+    list.head=NullListNode;
+    list.size=0;
+}
+
+AppendIntList:(list:*IntList,int:Int32)()=
+{
+    toAllocate:IntListNode=_;
+    newNode:=AllocateHeap(MemorySizeOf(toAllocate).size) as *IntListNode;
+    newNode.next=NullListNode;
+    newNode.data=int;
+
+    if list.head == NullListNode
+    {
+        list.head = newNode;
+    }
+    else
+    {
+        tHead:=list.head;
+        while (tHead.next!=NullListNode)
+        {
+            tHead=tHead.next;
+        }
+        tHead.next=newNode;
+    }
+    list.size++;
+}
+
+IntListToArray:(list:IntList)(array:*Int32)=
+{
+    a:Int32=_;
+    toAllocate:Int32=_;
+    array=AllocateHeap(MemorySizeOf(toAllocate).size * list.size) as *Int32;
+
+    tHead:=list.head;
+    for a=0..list.size
+    {
+        array[a]=tHead.data;
+        tHead=tHead.next;
+    }
+}
+

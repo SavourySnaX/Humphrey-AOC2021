@@ -1,0 +1,9 @@
+using System::Types
+
+void:
+{
+}
+
+[C_CALLING_CONVENTION]
+AllocateHeap:(size:UInt64)(allocated:*void)
+
