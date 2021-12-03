@@ -5,5 +5,5 @@ void:
 }
 
 [C_CALLING_CONVENTION]
-AllocateHeap:(size:UInt64)(allocated:*void)
+AllocateHeap:(size:UInt64,clear:bit)(allocated:*void) # Will zero allocation if clear is set
 

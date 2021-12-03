@@ -1,10 +1,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <memory.h>
 
-void* AllocateHeap(uint64_t size)
+void* AllocateHeap(uint64_t size, int clear)
 {
-    return malloc(size);
+    void* ptr=malloc(size);
+    if (clear&1)
+        memset(ptr,0,size);
+    return ptr;
 }
 
 char* LoadTextFile(const char* name)
