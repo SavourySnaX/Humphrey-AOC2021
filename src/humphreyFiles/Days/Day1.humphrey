@@ -25,7 +25,7 @@ Day1_Part1:()()=
         prevCnt=intArray.array[a];
     }
 
-    msg:="Part1: Total Increments %0";
+    msg:="Day1:Part1: Total Increments %0";
     PrintMessage1(&msg[0] as *UInt8, totalIncrements);
 }
 
@@ -55,7 +55,7 @@ Day1_Part2:()()=
         window[2]=window[3];
     }
 
-    msg:="Part2: Total Sliding Increments %0";
+    msg:="Day1:Part2: Total Sliding Increments %0";
     PrintMessage1(&msg[0] as *UInt8, totalIncrements);
 }
 

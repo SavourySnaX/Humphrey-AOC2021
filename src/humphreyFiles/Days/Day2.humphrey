@@ -42,7 +42,7 @@ Day2_Part1:()()=
         }
     }
 
-    msg:="Part1: Final Position %0,%1 - Multiplied %2";
+    msg:="Day2:Part1: Final Position %0,%1 - Multiplied %2";
     PrintMessage3(&msg[0] as *UInt8, x,y, x*y);
 }
 
@@ -73,7 +73,7 @@ Day2_Part2:()()=
         }
     }
 
-    msg:="Part1: Final Position %0,%1 - Multiplied %2";
+    msg:="Day2:Part2: Final Position %0,%1 - Multiplied %2";
     PrintMessage3(&msg[0] as *UInt8, x,y, x*y);
 }
 
