@@ -2,6 +2,7 @@ using System::Types
 using Support::Printing
 using Support::File
 using Support::IntList
+using Support::Assert
 
 MoveToken:Int32
 {
@@ -44,6 +45,8 @@ Day2_Part1:()()=
 
     msg:="Day2:Part1: Final Position %0,%1 - Multiplied %2";
     PrintMessage3(&msg[0] as *UInt8, x,y, x*y);
+
+    Assert((x*y)==1670340);
 }
 
 Day2_Part2:()()=
@@ -75,6 +78,8 @@ Day2_Part2:()()=
 
     msg:="Day2:Part2: Final Position %0,%1 - Multiplied %2";
     PrintMessage3(&msg[0] as *UInt8, x,y, x*y);
+
+    Assert((x*y)==1954293920);
 }
 
 ParseState:Int8

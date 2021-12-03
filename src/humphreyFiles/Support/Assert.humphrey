@@ -1,0 +1,10 @@
+
+
+Assert:(isTrue:bit)()=
+{
+    crashMe:=0 as *bit;
+    if ~isTrue
+    {
+        *crashMe=1;
+    }
+}
