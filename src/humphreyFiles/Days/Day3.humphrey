@@ -1,0 +1,122 @@
+using System::Types
+using Support::Printing
+using Support::File
+using Support::Memory
+using Support::Assert
+
+Day3:()()=
+{
+    Day3_Part1();
+    Day3_Part2();
+}
+
+Day3_Part1:()()=
+{
+    bitWidthOfFile:Int32=12;
+    mask:UInt32=((1<<bitWidthOfFile)-1) as UInt32;
+    filename:="day3.txt";
+    intArray:=LoadIntFile((&filename[0]) as *Int8, 2);
+    
+    cntArray := CountOfOnesInParallel(intArray.array,intArray.cnt,bitWidthOfFile).cntArray;
+    gamma:=ComputeGammaFromCounts(cntArray,bitWidthOfFile,intArray.cnt).result;
+    epsilon:=(~gamma) & mask;
+
+    msg:="Day3:Part1: Gamma %0, Epsilon %1 - Power %2";
+    PrintMessage3(&msg[0] as *UInt8, gamma, epsilon, gamma*epsilon);
+
+    Assert((gamma*epsilon)==2648450);
+}
+
+Day3_Part2:()()=
+{
+    bitWidthOfFile:Int32=12;
+    filename:="day3.txt";
+    intArray:=LoadIntFile((&filename[0]) as *Int8, 2);
+
+    oxygenGeneratorRating:=FindRatingWithComparison(intArray.array,intArray.cnt,bitWidthOfFile,CompareForOxygen).result;
+    cO2ScrubberRating:=FindRatingWithComparison(intArray.array,intArray.cnt,bitWidthOfFile,CompareForCO2).result;
+
+    msg:="Day3:Part2: O2 Rating %0, CO2 %1, Life Support Rating %2";
+    PrintMessage3(&msg[0] as *UInt8, oxygenGeneratorRating, cO2ScrubberRating, oxygenGeneratorRating*cO2ScrubberRating);
+
+    Assert((oxygenGeneratorRating*cO2ScrubberRating)==2845944);
+}
+
+CountOfOnesForBitIndex:(array:*Int32,cnt:Int32, idx:Int32)(count:UInt32)=
+{
+    a:Int32=_;
+    count=0;
+    for a=0..cnt
+    {
+        count=count+(array[a][idx] as UInt32);
+    }
+}
+
+CountOfOnesInParallel:(array:*Int32,cnt:Int32, width:Int32)(cntArray:*UInt32)=
+{
+    toAllocate:Int32=_;
+    cntArray=AllocateHeap(MemorySizeOf(toAllocate)*width,1) as *UInt32;
+
+    a,b:Int32=_;
+    for b=0..width
+    {
+        cntArray[b]=CountOfOnesForBitIndex(array,cnt,b).count;
+    }
+}
+
+ComputeGammaFromCounts:(cntArray:*UInt32,width:Int32,totalInputs:Int32)(result:UInt32)=
+{
+    a:Int32=_;
+    result=0;
+    for a=0..width
+    {
+        result[a]=cntArray[a]>=((totalInputs as UInt32)-cntArray[a]);
+    } 
+}
+
+ComparisonFunc:(cntOnes:UInt32,cntZeros:UInt32)(result:bit)
+
+CompareForOxygen:ComparisonFunc=
+{
+    result=cntOnes>=cntZeros;
+}
+
+CompareForCO2:ComparisonFunc=
+{
+    result=cntOnes<cntZeros;
+}
+
+FindRatingWithComparison:(array:*Int32,cnt:Int32,bitWidthOfFile:Int32,compare:ComparisonFunc)(result:Int32)=
+{
+    idx:=bitWidthOfFile-1;
+    while (cnt>1)
+    {
+        expectedCnt:=CountOfOnesForBitIndex(array,cnt,idx).count;
+        expectedBit:=compare(expectedCnt,(cnt as UInt32)-expectedCnt).result;
+        if ~expectedBit
+        {
+            expectedCnt=(cnt as UInt32)-expectedCnt;
+        }
+        array=CopyArrayIfBitExpected(array,cnt,idx,expectedCnt,expectedBit);
+        cnt=expectedCnt as Int32;
+
+        idx--;
+    }
+    result=array[0];
+}
+
+CopyArrayIfBitExpected:(arrayIn:*Int32,arrayInCnt:Int32,idx:Int32,expectedCnt:UInt32,expectedBit:bit)(array:*Int32)=
+{
+    a:Int32=0;
+    toAllocate:Int32=_;
+    array=AllocateHeap(MemorySizeOf(toAllocate)*expectedCnt,0) as *Int32;
+    cnt:Int32=0;
+
+    for a=0..arrayInCnt
+    {
+        if (arrayIn[a][idx]==expectedBit)
+        {
+            array[cnt++]=arrayIn[a];
+        }
+    }
+}

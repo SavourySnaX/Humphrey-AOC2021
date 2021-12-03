@@ -1,8 +1,10 @@
 using Days::Day1
 using Days::Day2
+using Days::Day3
 
 Days:()()=
 {
     Day1();
     Day2();
+    Day3();
 }
