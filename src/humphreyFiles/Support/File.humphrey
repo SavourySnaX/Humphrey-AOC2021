@@ -15,7 +15,8 @@ IsAsciiLowerCaseCharacter:(char:Int8)(answer:bit)=
     answer = (char>=0x61) && (char<=0x7A);
 }
 
-LoadIntFile:(filename:*Int8)(array:*Int32,cnt:Int32)=
+# Handles bases 1-10 for now
+LoadIntFile:(filename:*Int8,base:Int32)(array:*Int32,cnt:Int32)=
 {
     nullTerminated:=LoadTextFile(filename);
     # Absolute donkey doo
@@ -30,7 +31,7 @@ LoadIntFile:(filename:*Int8)(array:*Int32,cnt:Int32)=
         if (IsAsciiNumberCharacter(char))
         {
             lastValid=Bool.True;
-            tInt=tInt*10;
+            tInt=tInt*base;
             tInt=tInt+(char-0x30);
         }
         else
@@ -43,6 +44,11 @@ LoadIntFile:(filename:*Int8)(array:*Int32,cnt:Int32)=
             lastValid=Bool.False;
         }
         nullTerminated++;
+    }
+    if (lastValid==Bool.True)
+    {
+        AppendIntList(&list,tInt);
+        tInt=0;
     }
 
     cnt=list.size;

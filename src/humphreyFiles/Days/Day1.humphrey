@@ -11,7 +11,7 @@ Day1:()()=
 Day1_Part1:()()=
 {
     filename:="day1.txt";
-    intArray:=LoadIntFile((&filename[0]) as *Int8);
+    intArray:=LoadIntFile((&filename[0]) as *Int8, 10);
     
     a:Int32=_;
     prevCnt:=intArray.array[0];
@@ -32,7 +32,7 @@ Day1_Part1:()()=
 Day1_Part2:()()=
 {
     filename:="day1.txt";
-    intArray:=LoadIntFile((&filename[0]) as *Int8);
+    intArray:=LoadIntFile((&filename[0]) as *Int8, 10);
     
     window:[4]Int32=0;
 
