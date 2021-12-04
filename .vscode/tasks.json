@@ -17,7 +17,7 @@
             ],
             "problemMatcher": {
                 "owner": "humphrey",
-                "fileLocation": "relative",
+                "fileLocation": "absolute",
                 "pattern": [
                     {
                         "regexp": "^Error\\s\\[E.*\\]:\\s(.*)$",
@@ -53,7 +53,7 @@
                     "-O0",
                     "-Wall",
                     "-std=c11",
-                    "--output=.out/aoc"
+                    "--output=.out/aoc.exe"
                 ]
             },
             "linux":{
