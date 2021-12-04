@@ -12,7 +12,7 @@
                 "--optimisations=false",
                 "--debugInfo=true",
                 "--pic=true",
-                "--output=.out/kernel.o",
+                "--output=.out/aoc.o",
                 "src/humphreyFiles/main.humphrey"
             ],
             "problemMatcher": {
@@ -45,16 +45,29 @@
             "type": "process",
             "label": "Link",
             "command": "clang",
-            "args": [
-                ".out/kernel.o",
-                "src/cFiles/helpers.c",
-                "-g",
-                "-O0",
-                "-fpic",
-                "-Wall",
-                "-std=c11",
-                "--output=.out/aoc"
-            ],
+            "windows":{
+                "args": [
+                    ".out/aoc.o",
+                    "src/cFiles/helpers.c",
+                    "-g",
+                    "-O0",
+                    "-Wall",
+                    "-std=c11",
+                    "--output=.out/aoc"
+                ]
+            },
+            "linux":{
+                "args": [
+                    ".out/aoc.o",
+                    "src/cFiles/helpers.c",
+                    "-g",
+                    "-O0",
+                    "-fpic",
+                    "-Wall",
+                    "-std=c11",
+                    "--output=.out/aoc"
+                ]
+            },
             "problemMatcher": [],
             "group": {
                 "kind": "build",

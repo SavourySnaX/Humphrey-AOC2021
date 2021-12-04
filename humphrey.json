@@ -1,8 +1,8 @@
 {
-    "root": "/home/snax/Work/AOC2021/src/humphreyFiles/main.humphrey",
+    "root": "src/humphreyFiles/main.humphrey",
     "git": [
         {
-            "repo": "/home/snax/Work/Humphrey.System/.git",
+            "repo": "../Humphrey.System/.git",
             "revision": "main"
         }
     ]
