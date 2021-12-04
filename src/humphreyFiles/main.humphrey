@@ -1,10 +1,14 @@
 using Days::Day1
 using Days::Day2
 using Days::Day3
+using Days::Day4
+
+#NB Currently I`m not freeing any heap allocations, I'm fine with that.
 
 Days:()()=
 {
     Day1();
     Day2();
     Day3();
+    Day4();
 }

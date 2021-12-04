@@ -1,0 +1,238 @@
+using System::Types
+using Support::Printing
+using Support::File
+using Support::Assert
+using Support::IntList
+using Support::Memory
+
+Day4:()()=
+{
+    Day4_Part1();
+    Day4_Part2();
+}
+
+Day4_Part1:()()=
+{
+    filename:="day4.txt";
+    data:=LoadBingo((&filename[0]) as *Int8);
+
+    #Brute force solution
+    drawIdx,boardIdx:UInt32=_;
+    for drawIdx=0..data.balls.cnt
+    {
+        for boardIdx=0..data.bingo.cnt
+        {
+            ballValue:=data.balls.array[drawIdx];
+            score:=CheckBoard(&data.bingo.boards[boardIdx],ballValue);
+            if score!=0
+            {
+                # Winning Board
+                msg:="Day3:Part1: Board Idx %0, Score %1, Ball Value %2, answer : %3";
+                PrintMessage4(&msg[0] as *UInt8, boardIdx, ballValue, score, ballValue*score);
+                Assert((ballValue*score)==33462);
+                return;
+            }
+        }
+    }
+
+    Assert(0);  # We never found a winner
+}
+
+Day4_Part2:()()=
+{
+    filename:="day4.txt";
+    data:=LoadBingo((&filename[0]) as *Int8);
+
+    #Brute force solution
+    toAllocate:bit=_;
+    solved := AllocateHeap(MemorySizeOf(toAllocate).size * data.bingo.cnt,1) as *bit;
+    solvedCnt:UInt32=0;
+    drawIdx,boardIdx:UInt32=_;
+    for drawIdx=0..data.balls.cnt
+    {
+        for boardIdx=0..data.bingo.cnt
+        {
+            if !(solved[boardIdx])
+            {
+                ballValue:=data.balls.array[drawIdx];
+                score:=CheckBoard(&data.bingo.boards[boardIdx],ballValue);
+                if score!=0
+                {
+                    solved[boardIdx]=1;
+                    solvedCnt++;
+
+                    if solvedCnt==data.bingo.cnt
+                    {
+                        # Losing Board
+                        msg:="Day3:Part2: Board Idx %0, Score %1, Ball Value %2, answer : %3";
+                        PrintMessage4(&msg[0] as *UInt8, boardIdx, ballValue, score, ballValue*score);
+                        Assert((ballValue*score)==30070);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    Assert(0);  # We never found a loser
+}
+
+SumBoardRow:(board:*BingoBoard,row:Int32)(sum:Int32)=
+{
+    x:Int32=_;
+    sum=0;
+    for x=0..5
+    {
+        sum=sum+(board.board[x][row]);
+    }
+}
+
+SumBoardColumn:(board:*BingoBoard,col:Int32)(sum:Int32)=
+{
+    y:Int32=_;
+    sum=0;
+    for y=0..5
+    {
+        sum=sum+(board.board[col][y]);
+    }
+}
+
+SumBoard:(board:*BingoBoard)(sum:Int32)=
+{
+    x,y:Int32=_;
+    sum=0;
+    for y=0..5
+    {
+        sum = sum+(SumBoardRow(board,y).sum);
+    }
+
+}
+
+CheckBoard:(board:*BingoBoard, drawnTile:UInt8)(score:Int32)=
+{
+    x,y:Int32=_;
+    score=0;
+    for y=0..5
+    {
+        for x=0..5
+        {
+            if board.board[x][y]==drawnTile
+            {
+                board.board[x][y]=0;
+                row:=SumBoardRow(board,y).sum;
+                col:=SumBoardColumn(board,x).sum;
+                if (row == 0) || (col == 0)
+                {
+                    score = SumBoard(board);
+                    return;
+                } 
+            }
+        }
+    }
+
+}
+
+Balls:
+{
+    array:*UInt8
+    cnt:UInt32
+}
+
+BingoBoard:
+{
+    board:[5][5]UInt8
+}
+
+Bingo:
+{
+    boards:*BingoBoard
+    cnt:UInt32
+}
+
+LoadBingo:(filename:*Int8)(bingo:Bingo,balls:Balls)=
+{
+    oBingo:Bingo=_; # Work around issue in compiler that can't spot a struct is fully assigned in an output yet
+    oBalls:Balls=_;
+    nullTerminated:=LoadTextFile(filename);
+    # Assumes no errors in the file
+
+    list:=BeginIntList().list;
+    numInts:Int32=0;
+    tInt:Int32=0;
+    # First line is a , (0x2C) seperated list of ints, terminated by by 2 LF's (0x0A)
+    while (*nullTerminated)!=0x0A
+    {
+        char:=*nullTerminated;
+        if (IsAsciiNumberCharacter(char))
+        {
+            tInt=tInt*10;
+            tInt=tInt+(char-0x30);
+        }
+        else
+        {
+            AppendIntList(&list,tInt);
+            tInt=0;
+        }
+        nullTerminated++;
+    }
+    nullTerminated++;   # Skip next LF
+    nullTerminated++;   # Skip next LF
+
+    oBalls.cnt = list.size as UInt32;
+    oBalls.array = IntListToArrayUInt8(list).array;
+
+    boardStart:=nullTerminated;
+
+    # Count number of boards we need
+    numBoards:UInt32=0;
+    while (*nullTerminated)!=0
+    {
+        if (nullTerminated[0]==0x0A)&&((nullTerminated[1]==0x0A)||(nullTerminated[1]==0x00))
+        {
+            numBoards++;
+            if nullTerminated[1]==0x0A
+            {
+                nullTerminated++;
+            }
+        }
+        nullTerminated++;
+    }
+    toAllocate:BingoBoard=_;
+    oBingo.boards = AllocateHeap(MemorySizeOf(toAllocate).size * numBoards,0) as *BingoBoard;
+    oBingo.cnt=0;
+    
+    msgDebug:="NumBoards %0 Bingo Cnt %1";
+    #PrintMessage3(&msgDebug as *UInt8, numBoards, oBingo.cnt, 0);
+
+    #Now Load Boards
+    nullTerminated=boardStart;
+    while (*nullTerminated)!=0
+    {
+        t:BingoBoard=_;
+        x,y:Int32=_;
+        for y=0..5
+        {
+            for x=0..5
+            {
+                tens:=(*nullTerminated++) as UInt8;
+                ones:=(*nullTerminated++) as UInt8;
+                nullTerminated++;   # Skip Gap
+                if tens==0x20
+                {
+                    tens=0;
+                }
+                else
+                {
+                    tens=tens-0x30;
+                }
+                ones=ones-0x30;
+                t.board[x][y]=tens*10+ones;
+            }
+        }
+        nullTerminated++;   # Skip next LF
+        oBingo.boards[oBingo.cnt++]=t;
+    }
+
+    bingo=oBingo;
+    balls=oBalls;
+}

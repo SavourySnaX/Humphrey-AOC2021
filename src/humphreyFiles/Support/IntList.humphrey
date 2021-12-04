@@ -13,12 +13,12 @@ IntList:
     size:Int32
 }
 
-NullListNode:=0 as *IntListNode
+NullIntListNode:=0 as *IntListNode
 
 BeginIntList:()(list:IntList)=
 {
     list=0;
-    list.head=NullListNode;
+    list.head=NullIntListNode;
     list.size=0;
 }
 
@@ -26,17 +26,17 @@ AppendIntList:(list:*IntList,int:Int32)()=
 {
     toAllocate:IntListNode=_;
     newNode:=AllocateHeap(MemorySizeOf(toAllocate).size,0) as *IntListNode;
-    newNode.next=NullListNode;
+    newNode.next=NullIntListNode;
     newNode.data=int;
 
-    if list.head == NullListNode
+    if list.head == NullIntListNode
     {
         list.head = newNode;
     }
     else
     {
         tHead:=list.head;
-        while (tHead.next!=NullListNode)
+        while (tHead.next!=NullIntListNode)
         {
             tHead=tHead.next;
         }
@@ -55,6 +55,20 @@ IntListToArray:(list:IntList)(array:*Int32)=
     for a=0..list.size
     {
         array[a]=tHead.data;
+        tHead=tHead.next;
+    }
+}
+
+IntListToArrayUInt8:(list:IntList)(array:*UInt8)=
+{
+    a:Int32=_;
+    toAllocate:UInt8=_;
+    array=AllocateHeap(MemorySizeOf(toAllocate).size * list.size,0) as *UInt8;
+
+    tHead:=list.head;
+    for a=0..list.size
+    {
+        array[a]=tHead.data as UInt8;
         tHead=tHead.next;
     }
 }
