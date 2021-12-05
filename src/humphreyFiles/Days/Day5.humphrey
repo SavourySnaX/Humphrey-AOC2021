@@ -1,0 +1,267 @@
+using System::Types
+using Support::Printing
+using Support::File
+using Support::Assert
+using Support::IntList
+using Support::Memory
+
+Day5:()()=
+{
+    Day5_Part1();
+    Day5_Part2();
+}
+
+Day5_Part1:()()=
+{
+    filename:="day5.txt";
+    lines:=LoadLines(&filename as *Int8).lines;
+
+    #Brute Force using grid
+    grid:=AllocateGrid(lines.maxX+1,lines.maxY+1);
+
+    a:UInt32=_;
+    for a=0..lines.cnt
+    {
+        if LineIsHorizontalOrVertical(lines.data[a])
+        {
+            RasteriseLineToGrid(lines.data[a],grid);
+        }
+    }
+
+    result: = CountCellsOver1(grid).cnt;
+
+    msg:="Num overlapping cells : %0";
+    PrintMessage1(&msg[0] as *UInt8, result);
+    Assert(result==5084);
+}
+
+Day5_Part2:()()=
+{
+    filename:="day5.txt";
+    lines:=LoadLines(&filename as *Int8).lines;
+
+    #Brute Force using grid
+    grid:=AllocateGrid(lines.maxX+1,lines.maxY+1);
+
+    a:UInt32=_;
+    for a=0..lines.cnt
+    {
+        if LineIsHorizontalOrVerticalOr45Degrees(lines.data[a])
+        {
+            RasteriseLineToGrid(lines.data[a],grid);
+        }
+    }
+
+    result: = CountCellsOver1(grid).cnt;
+
+    msg:="Num overlapping cells : %0";
+    PrintMessage1(&msg[0] as *UInt8, result);
+    Assert(result==17882);
+}
+
+
+CountCellsOver1:(grid:Grid)(cnt:UInt32)=
+{
+    a:UInt32=_;
+    cnt=0;
+    for a=0..(grid.xSize*grid.ySize)
+    {
+        if grid.data[a]>1
+        {
+            cnt++;
+        }
+    }
+}
+
+RasteriseLineToGrid:(line:Line,grid:Grid)()=
+{
+    x0,x1,y0,y1:Int64=_;
+    dx,dy,sx,sy,err:Int64=_;
+    gridXSize:Int64=grid.xSize;
+    x0=line.sx;
+    x1=line.ex;
+    y0=line.sy;
+    y1=line.ey;
+    dx=AbsInt64(x1-x0).out;
+    dy=-(AbsInt64(y1-y0).out);
+    sx=SignInt64(x1-x0);
+    sy=SignInt64(y1-y0);
+    err=dx+dy;
+    while 1
+    {
+        grid.data[x0+y0*gridXSize]++;
+        if (x0==x1)&&(y0==y1)
+        {
+            return;
+        }
+        e2:=err*2;
+        if e2>=dy
+        {
+            err=err+dy;
+            x0=x0+sx;
+        }
+        if e2<=dx
+        {
+            err=err+dx;
+            y0=y0+sy;
+        }
+    }
+}
+
+AbsInt64:(in:Int64)(out:Int64)=
+{
+    if in<0
+    {
+        out=-in;
+    }
+    else
+    {
+        out=in;
+    }
+}
+
+SignInt64:(in:Int64)(out:Int64)=
+{
+    if in[63]
+    {
+        out=-1;
+    }
+    else
+    {
+        out=1;
+    }
+}
+AllocateGrid:(sizeX:UInt32,sizeY:UInt32)(grid:Grid)=
+{
+    oGrid:Grid=_;
+    oGrid.xSize=sizeX;
+    oGrid.ySize=sizeY;
+    toAllocate:UInt32=_;
+    oGrid.data = AllocateHeap(MemorySizeOf(toAllocate).size * sizeX * sizeY,1) as *UInt32;
+    grid=oGrid;
+}
+
+LineIsHorizontalOrVerticalOr45Degrees:(line:Line)(isHorizontalOrVerticalOr45Degrees:bit)=
+{
+    isHorizontalOrVerticalOr45Degrees = LineIsHorizontalOrVertical(line);
+    dx,dy:Int64=_;
+    x0,x1,y0,y1:Int64=_;
+    x0=line.sx;
+    x1=line.ex;
+    y0=line.sy;
+    y1=line.ey;
+    dx=AbsInt64(x1-x0).out;
+    dy=AbsInt64(y1-y0).out;
+    isHorizontalOrVerticalOr45Degrees = isHorizontalOrVerticalOr45Degrees | (dx==dy);
+}
+
+LineIsHorizontalOrVertical:(line:Line)(isHorizontalOrVertical:bit)=
+{
+    isHorizontalOrVertical = ((line.sx==line.ex)||(line.sy==line.ey));
+}
+
+Grid:
+{
+    data:*UInt32
+    xSize:UInt32
+    ySize:UInt32
+}
+
+Line:
+{
+    sx,sy:UInt32
+    ex,ey:UInt32
+}
+Lines:
+{
+    data:*Line
+    cnt:UInt32
+    maxX:UInt32
+    maxY:UInt32
+}
+
+ParseUInt32FromAscii:(input:*Int8)(uint:UInt32,newPtr:*Int8)=
+{
+    uint=0;
+    while IsAsciiNumberCharacter(*input)
+    {
+        uint=uint*10 + ((*input)-0x30);
+        input++;
+    }
+    newPtr=input;
+}
+
+LoadLines:(filename:*Int8)(lines:Lines)=
+{
+    oLines:Lines=_; # Work around issue in compiler that can't spot a struct is fully assigned in an output yet
+    nullTerminated:=LoadTextFile(filename);
+    startLines:=nullTerminated;
+    # Assumes no errors in the file
+
+    #Count number Lines
+    oLines.cnt=0;
+    while (*nullTerminated) != 0
+    {
+        if ((*nullTerminated)==0x0A)
+        {
+            oLines.cnt++;
+        }
+        nullTerminated++;
+    }
+
+    toAllocate:Line=_;
+    oLines.data = AllocateHeap(MemorySizeOf(toAllocate).size * oLines.cnt,0) as *Line;
+
+    #Load lines
+    idx:UInt32=_;
+    nullTerminated=startLines;
+    oLines.maxX=0;
+    oLines.maxY=0;
+    for idx=0..oLines.cnt
+    {
+        tLine:Line=_;
+        #First X
+        result:=ParseUInt32FromAscii(nullTerminated);   # Todo allow something like tLine.sx,nullTerminated = ParseUInt32FromAscii(nullTerminated)
+        tLine.sx=result.uint;
+        oLines.maxX = MaxUInt32(tLine.sx,oLines.maxX);
+        nullTerminated=result.newPtr;
+        nullTerminated++;   # skip ','
+        #First Y
+        result=ParseUInt32FromAscii(nullTerminated);   # Todo allow something like tLine.sx,nullTerminated = ParseUInt32FromAscii(nullTerminated)
+        tLine.sy=result.uint;
+        oLines.maxY = MaxUInt32(tLine.sy,oLines.maxY);
+        nullTerminated=result.newPtr;
+        nullTerminated++;
+        nullTerminated++;
+        nullTerminated++;
+        nullTerminated++;   # skip ' -> '
+        #Second X
+        result=ParseUInt32FromAscii(nullTerminated);   # Todo allow something like tLine.sx,nullTerminated = ParseUInt32FromAscii(nullTerminated)
+        tLine.ex=result.uint;
+        oLines.maxX = MaxUInt32(tLine.ex,oLines.maxX);
+        nullTerminated=result.newPtr;
+        nullTerminated++;   # skip ','
+        #Second Y
+        result=ParseUInt32FromAscii(nullTerminated);   # Todo allow something like tLine.sx,nullTerminated = ParseUInt32FromAscii(nullTerminated)
+        tLine.ey=result.uint;
+        oLines.maxY = MaxUInt32(tLine.ey,oLines.maxY);
+        nullTerminated=result.newPtr;
+        nullTerminated++;   # skip newline
+
+        oLines.data[idx]=tLine;
+    }
+
+    lines=oLines;
+}
+
+MaxUInt32:(a:UInt32,b:UInt32)(result:UInt32)=
+{
+    if (a>b)
+    {
+        result=a;
+    }
+    else
+    {
+        result=b;
+    }
+}
