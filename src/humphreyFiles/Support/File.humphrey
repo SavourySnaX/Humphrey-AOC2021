@@ -18,10 +18,18 @@ IsAsciiLowerCaseCharacter:(char:Int8)(answer:bit)=
 # Handles bases 1-10 for now
 LoadIntFile:(filename:*Int8,base:Int32)(array:*Int32,cnt:Int32)=
 {
+    list:=LoadIntFileAsList(filename,base).list;
+
+    cnt=list.size;
+    array=IntListToArray(list).array;
+}
+
+LoadIntFileAsList:(filename:*Int8,base:Int32)(list:IntList)=
+{
     nullTerminated:=LoadTextFile(filename);
     # Absolute donkey doo
 
-    list:=BeginIntList().list;
+    list=BeginIntList().list;
     numInts:Int32=0;
     tInt:Int32=0;
     lastValid:=Bool.False;
@@ -50,8 +58,4 @@ LoadIntFile:(filename:*Int8,base:Int32)(array:*Int32,cnt:Int32)=
         AppendIntList(&list,tInt);
         tInt=0;
     }
-
-    cnt=list.size;
-    array=IntListToArray(list).array;
 }
-
