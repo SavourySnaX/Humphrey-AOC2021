@@ -1,0 +1,63 @@
+using System::Types
+using Support::Printing
+using Support::File
+using Support::IntList
+using Support::Assert
+
+Day6:()()=
+{
+    Day6_Part1();
+    Day6_Part2();
+}
+
+Day6_Part1:()()=
+{
+    filename:="day6.txt";
+    list:=LoadIntFileAsList((&filename[0]) as *Int8, 10).list;
+    
+    totalFish:=SimulateGrowthCycle(list,80).totalFish;
+
+    msg:="Day6:Part1: Lantern fish after 80 days : %0";
+    PrintMessage1(&msg[0] as *UInt8, totalFish );
+    Assert(totalFish==360268);
+}
+
+Day6_Part2:()()=
+{
+    filename:="day6.txt";
+    list:=LoadIntFileAsList((&filename[0]) as *Int8, 10).list;
+
+    totalFish:=SimulateGrowthCycle(list,256).totalFish;
+
+    msg:="Day6:Part2: Lantern fish after 256 days : %0";
+    PrintMessage1(&msg[0] as *UInt8, totalFish);
+    Assert(totalFish==1632146183902);
+}
+
+SimulateGrowthCycle:(list:IntList,numDays:Int32)(totalFish:UInt64)=
+{
+    buckets:[9]UInt64=0;
+    a,b:Int32=_;
+
+    head:=list.head;    
+    totalFish=0;
+    for a=0..list.size
+    {
+        buckets[head.data]++;
+        totalFish++;
+        head=head.next;
+    }
+
+    # Buckets are filled. Now we can simulate them
+    for a=0..numDays
+    {
+        toGrow:=buckets[0];
+        for b=0..8
+        {
+            buckets[b]=buckets[b+1];
+        }
+        buckets[6]=buckets[6]+toGrow;  # re-introduce population
+        buckets[8]=toGrow;   # Grow population
+        totalFish=totalFish+toGrow;
+    }
+}
