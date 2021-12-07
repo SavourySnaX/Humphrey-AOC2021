@@ -4,6 +4,7 @@ using Support::File
 using Support::Assert
 using Support::IntList
 using Support::Memory
+using Support::Math
 
 Day5:()()=
 {
@@ -105,30 +106,6 @@ RasteriseLineToGrid:(line:Line,grid:Grid)()=
             err=err+dx;
             y0=y0+sy;
         }
-    }
-}
-
-AbsInt64:(in:Int64)(out:Int64)=
-{
-    if in<0
-    {
-        out=-in;
-    }
-    else
-    {
-        out=in;
-    }
-}
-
-SignInt64:(in:Int64)(out:Int64)=
-{
-    if in[63]
-    {
-        out=-1;
-    }
-    else
-    {
-        out=1;
     }
 }
 
@@ -253,16 +230,4 @@ LoadLines:(filename:*Int8)(lines:Lines)=
     }
 
     lines=oLines;
-}
-
-MaxUInt32:(a:UInt32,b:UInt32)(result:UInt32)=
-{
-    if (a>b)
-    {
-        result=a;
-    }
-    else
-    {
-        result=b;
-    }
 }
