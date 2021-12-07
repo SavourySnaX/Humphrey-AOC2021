@@ -1,0 +1,94 @@
+using System::Types
+using Support::File
+using Support::Printing
+using Support::Assert
+using Support::Math
+
+Day7:()()=
+{
+    Day7_Part1();
+    Day7_Part2();
+}
+
+Day7_Part1:()()=
+{
+    filename:="day7.txt";
+    array:=LoadIntFile((&filename[0]) as *Int8, 10);
+    
+    fuel:=FindBestAlignmentFuelConsumption(array.array,array.cnt,Day1Consumption).minFuel;
+
+    msg:="Day7:Part1: Fuel to spend : %0";
+    PrintMessage1(&msg[0] as *UInt8, fuel );
+    Assert(fuel==337833);
+}
+
+Day7_Part2:()()=
+{
+    filename:="day7.txt";
+    array:=LoadIntFile((&filename[0]) as *Int8, 10);
+    
+    fuel:=FindBestAlignmentFuelConsumption(array.array,array.cnt,Day2Consumption).minFuel;
+
+    msg:="Day7:Part2: Fuel to spend : %0";
+    PrintMessage1(&msg[0] as *UInt8, fuel );
+    Assert(fuel==96678050);
+}
+
+SingleSelector:(old:Int32,new:Int32)(keepNew:bit)
+
+MinimumSelector:SingleSelector=
+{
+    keepNew = old>new;
+}
+
+MaximumSelector:SingleSelector=
+{
+    keepNew = old<new;
+}
+
+
+SingleFromArray:(intArray:*Int32,cnt:Int32,selector:SingleSelector)(chosen:Int32)=
+{
+    a:Int32=_;
+    chosen=intArray[0];
+    for a=1..cnt
+    {
+        if selector(chosen,intArray[a])
+        {
+            chosen=intArray[a];
+        }
+    }
+}
+
+FuelConsumption:(in:Int32)(out:Int32)
+
+Day1Consumption:FuelConsumption=
+{
+    out=in;
+}
+
+Day2Consumption:FuelConsumption=
+{
+    out = (in * (1+in))/2;
+}
+
+FindBestAlignmentFuelConsumption:(intArray:*Int32,cnt:Int32,consumption:FuelConsumption)(minFuel:Int32)=
+{
+    minScan:=SingleFromArray(intArray,cnt, MinimumSelector).chosen;
+    maxScan:=SingleFromArray(intArray,cnt, MaximumSelector).chosen;
+
+    a,b:Int32=_;
+    minFuel=0x7FFF_FFFF;
+    for a=minScan..maxScan+1
+    {
+        thisFuel:Int32=0;
+        for b=0..cnt
+        {
+            thisFuel=thisFuel + consumption(AbsInt32(intArray[b]-a));
+        }
+        if (thisFuel<minFuel)
+        {
+            minFuel=thisFuel;
+        }
+    }
+}
