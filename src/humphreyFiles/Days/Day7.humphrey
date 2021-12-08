@@ -46,7 +46,6 @@ MaximumSelector:SingleSelector=
     keepNew = old<new;
 }
 
-
 SingleFromArray:(intArray:*Int32,cnt:Int32,selector:SingleSelector)(chosen:Int32)=
 {
     a:Int32=_;
