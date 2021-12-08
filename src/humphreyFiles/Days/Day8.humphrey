@@ -1,0 +1,324 @@
+using System::Types
+using Support::Types
+using Support::File
+using Support::Printing
+using Support::Assert
+using Support::Memory
+
+Day8:()()=
+{
+    Day8_Part1();
+    Day8_Part2();
+}
+
+Day8_Part1:()()=
+{
+    filename:="day8.txt";
+    file:=LoadLedFile((&filename[0]) as *Int8).file;
+    
+    num:=NumberOfEasyInstancesInOutputs(file).cnt;
+
+    msg:="Day8:Part1: Count of easy instances : %0";
+    PrintMessage1(&msg[0] as *UInt8, num );
+    Assert(num==412);
+}
+
+Day8_Part2:()()=
+{
+    filename:="day8.txt";
+    file:=LoadLedFile((&filename[0]) as *Int8).file;
+    a:UInt32=_;
+    sum:UInt64=0;
+    for a=0..file.cnt
+    {
+        sum = sum + Decode(file.lines[a]);
+    }
+    msg:="Day8:Part2: Sum of output displays : %0";
+    PrintMessage1(&msg[0] as *UInt8, sum );
+    Assert(sum==978171);
+}
+
+7Segment:UInt8
+|{
+    _:bit           #  aaaa
+    g:bit           # b    c
+    f:bit           # b    c
+    e:bit           #  dddd
+    d:bit           # e    f
+    c:bit           # e    f
+    b:bit           #  gggg
+    a:bit
+}
+
+SegmentInfo:
+{
+    cnt:UInt8
+    segment:7Segment
+}
+
+7Segments:
+{
+    segments:*SegmentInfo
+    cnt:UInt32
+}
+
+LedLine:
+{
+    inputs:7Segments
+    outputs:7Segments
+}
+
+LedFile:
+{
+    lines:*LedLine
+    cnt:UInt32
+}
+
+LoadLedFile:(filename:*Int8)(file:LedFile)=
+{
+    oFile:LedFile=_;
+    nullTerminated:=LoadTextFile(filename);
+
+    # Count lines in file
+    startOfFile:=nullTerminated;
+    oFile.cnt=0;
+    while (*nullTerminated)!=0
+    {
+        if (*nullTerminated)==0x0A
+        {
+            oFile.cnt++;
+        }
+        nullTerminated++;
+    }
+
+    toAllocate:LedLine=_;
+    oFile.lines = AllocateHeap(MemorySizeOf(toAllocate).size * oFile.cnt,0) as *LedLine;
+
+    a:UInt32=_;
+
+    nullTerminated=startOfFile;
+    for a=0..oFile.cnt
+    {
+        result:=LoadLedLine(nullTerminated);
+        nullTerminated=result.nextLine;
+        oFile.lines[a]=result.line;
+    }
+
+    file=oFile;
+}
+
+LoadLedLine:(lineToRead:*Int8)(nextLine:*Int8, line:LedLine)=
+{
+    oLine:LedLine=_;
+    nextLine=lineToRead;
+
+    # Count inputs/outputs
+    oLine.inputs.cnt=0;
+    oLine.outputs.cnt=0;
+    countingInputs:=Bool.True;
+    while (*nextLine)!=0x0A
+    {
+        if (nextLine[0]==0x20)
+        {
+            if (nextLine[1]==0x7C)
+            {
+                oLine.inputs.cnt++;
+                countingInputs=Bool.False;
+            }
+            else
+            {
+                if countingInputs
+                {
+                    oLine.inputs.cnt++;
+                }
+                else
+                {
+                    oLine.outputs.cnt++;
+                }
+
+            }
+        }
+        nextLine++;
+    }
+    # Allocate inputs and outputs
+    toAllocate:SegmentInfo=_;
+    oLine.inputs.segments = AllocateHeap(MemorySizeOf(toAllocate).size * oLine.inputs.cnt,0) as *SegmentInfo;
+    oLine.outputs.segments = AllocateHeap(MemorySizeOf(toAllocate).size * oLine.outputs.cnt,0) as *SegmentInfo;
+
+    # Now load segments for line
+    a:UInt32=_;
+    nextLine=lineToRead;
+    for a=0..oLine.inputs.cnt
+    {
+        result:=Read7Segment(nextLine);
+        nextLine=result.nextLine;
+        oLine.inputs.segments[a]=result.segment;
+        nextLine++; # skip blank
+    }
+    nextLine++; # skip |
+    nextLine++; # skip blank
+    for a=0..oLine.outputs.cnt
+    {
+        result:=Read7Segment(nextLine);
+        nextLine=result.nextLine;
+        oLine.outputs.segments[a]=result.segment;
+        nextLine++; # skip blank
+    }
+
+    line=oLine;
+}
+
+Read7Segment:(line:*Int8)(nextLine:*Int8, segment:SegmentInfo)=
+{
+    nextLine=line;
+    segment=0;
+    while IsAsciiLowerCaseCharacter(*nextLine)
+    {
+        segmentNumber:=(*nextLine)-0x61;
+        val:=segment.segment.raw;           ## Compiler bug - raw[subscript]=  fails
+        val[segmentNumber]=1;
+        segment.segment.raw=val;
+        segment.cnt++;
+        nextLine++;
+    }
+}
+
+NumberOfEasyInstancesInOutputs:(file:LedFile)(cnt:UInt32)=
+{
+    cnt=0;
+    a,b:UInt32=_;
+
+    for a=0..file.cnt
+    {
+        for b=0..file.lines[a].outputs.cnt
+        {
+            numSegmentsSet:=file.lines[a].outputs.segments[b].cnt;
+            if (numSegmentsSet==2) || (numSegmentsSet==4) || (numSegmentsSet==3) || (numSegmentsSet==7) # 1,4,7,8
+            {
+                cnt++;
+            }
+        }
+    }
+}
+
+Decode:(line:LedLine)(outputValue:UInt64)=
+{
+    a:UInt32=_;
+    digits:[10]7Segment=_;
+
+    # Resolve easy digits
+    for a=0..line.inputs.cnt
+    {
+        segment:=line.inputs.segments[a];
+        numSegmentsSet:=segment.cnt;
+        if (numSegmentsSet==2)
+        {
+            digits[1] = segment.segment;
+        }
+        if (numSegmentsSet==4)
+        {
+            digits[4] = segment.segment;
+        }
+        if (numSegmentsSet==3) 
+        {
+            digits[7] = segment.segment;
+        }
+        if (numSegmentsSet==7)
+        {
+            digits[8] = segment.segment;
+        }
+    }
+
+    # We now know which segments are used for each of the digits 1,4,7 & 8
+
+    # Resolve 5 count segments 
+    # 3 shares 2 bits with 1
+    # 2 shares 1 bit with 1  2 bits with 4
+    # 5 shares 1 bit with 1  3 bits with 4
+    for a=0..line.inputs.cnt
+    {
+        segment:=line.inputs.segments[a];
+        numSegmentsSet:=segment.cnt;
+        if (numSegmentsSet==5)
+        {
+            checkWith1:=(digits[1].raw)&(segment.segment.raw);
+
+            if CountBits(checkWith1).cnt == 2
+            {
+                digits[3] = segment.segment;
+            }
+            else
+            {
+                checkWith4:=(digits[4].raw)&(segment.segment.raw);
+
+                if CountBits(checkWith4).cnt == 2
+                {
+                    digits[2] = segment.segment;
+                }
+                else
+                {
+                    digits[5] = segment.segment;
+                }
+            }
+        }
+    }
+
+    # We now know which segments are used for each of the digits 1,2,3,4,5,7 & 8
+
+    # Resolve 6 count segments 
+    # 0 shares 4 bits with 5
+    # 6 shares 5 bits with 5   4 bits with 3
+    # 9 shares 5 bits with 5   5 bits with 3
+    for a=0..line.inputs.cnt
+    {
+        segment:=line.inputs.segments[a];
+        numSegmentsSet:=segment.cnt;
+        if (numSegmentsSet==6)
+        {
+            checkWith5:=(digits[5].raw)&(segment.segment.raw);
+
+            if CountBits(checkWith5).cnt == 4
+            {
+                digits[0] = segment.segment;
+            }
+            else
+            {
+                checkWith3:=(digits[3].raw)&(segment.segment.raw);
+
+                if CountBits(checkWith3).cnt == 4
+                {
+                    digits[6] = segment.segment;
+                }
+                else
+                {
+                    digits[9] = segment.segment;
+                }
+            }
+        }
+    }
+
+    # We now know which segments are used for each of the digits 0,1,2,3,4,5,6,7,8 & 9
+    lazyLookup:[256]UInt32=0;
+    for a=0..10
+    {
+        lazyLookup[digits[a].raw]=a;
+    }
+
+    # Final step is to decode our final digits into an integer
+    outputValue=0;
+    for a=0..line.outputs.cnt
+    {
+        outputValue = outputValue*10 + lazyLookup[line.outputs.segments[a].segment.raw];
+    }
+}
+
+CountBits:(in:UInt8)(cnt:UInt32)=
+{
+    a:UInt32=_;
+    cnt=0;
+    while in!=0
+    {
+        in = in & (in-1);
+        cnt++;
+    }
+}
