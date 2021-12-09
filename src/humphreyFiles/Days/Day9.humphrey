@@ -1,0 +1,212 @@
+using System::Types
+using Support::Types
+using Support::File
+using Support::UIntList
+using Support::Printing
+using Support::Assert
+using Support::Memory
+using Support::Grid
+
+Day9:()()=
+{
+    Day9_Part1();
+    Day9_Part2();
+}
+
+Day9_Part1:()()=
+{
+    filename:="day9.txt";
+    grid:=LoadGrid((&filename[0]) as *Int8).grid;
+    
+    risk:=CalculateRisk(grid).risk;
+    
+    msg:="Day9:Part1: Risk : %0";
+    PrintMessage1(&msg[0] as *UInt8, risk );
+    Assert(risk==504);
+}
+
+Day9_Part2:()()=
+{
+    filename:="day9.txt";
+    grid:=LoadGrid((&filename[0]) as *Int8).grid;
+
+    startingPoints:=FetchLocalMinimaIdx(grid).list;
+
+    sizes:=BeginUIntList().list;
+    uniqueNegIdx:Int32=-1;
+    a:Int32=_;
+    head:=startingPoints.head;
+    for a=0..startingPoints.size
+    {
+        idx:=head.data;
+        pos:=IdxToPosition(grid,idx);
+        if grid.data[idx]>=0
+        {
+            PrependUIntList(&sizes,FloodGrid(grid,pos.x,pos.y, uniqueNegIdx--).size);
+        }
+        else
+        {
+            PrependUIntList(&sizes,0);
+        }
+        head=head.next;
+    }
+
+    basinSize:=BasinSizeOfBest3(sizes).size;
+
+    msg:="Day9:Part2: Risk : %0";
+    PrintMessage1(&msg[0] as *UInt8, basinSize );
+    Assert(basinSize==1558722);
+}
+
+IsLocalMinima:(grid:Grid,x:UInt32,y:UInt32)(isLocalMinima:bit)=
+{
+    # Check each adjacent location
+    isLocalMinima=1;
+    localValue:=grid.data[x+y*grid.xSize];
+
+    if (x!=0) && (grid.data[(x-1)+y*grid.xSize] <= localValue)
+    {
+        isLocalMinima=0;
+    }
+    if (x<grid.xSize-1) && (grid.data[(x+1)+y*grid.xSize] <= localValue)
+    {
+        isLocalMinima=0;
+    }
+    if (y!=0) && (grid.data[x+(y-1)*grid.xSize] <= localValue)
+    {
+        isLocalMinima=0;
+    }
+    if (y<grid.ySize-1) && (grid.data[x+(y+1)*grid.xSize] <= localValue)
+    {
+        isLocalMinima=0;
+    }
+}
+
+CalculateRisk:(grid:Grid)(risk:Int32)=
+{
+    risk=0;
+    x,y:UInt32=_;
+    
+    for y=0..grid.ySize
+    {
+        for x=0..grid.xSize
+        {
+            if IsLocalMinima(grid,x,y)
+            {
+                risk=risk + 1 + grid.data[x+y*grid.xSize];
+            }
+        }
+    }
+}
+
+FetchLocalMinimaIdx:(grid:Grid)(list:UIntList)=
+{
+    list=BeginUIntList().list;
+    x,y:UInt32=_;
+    
+    for y=0..grid.ySize
+    {
+        for x=0..grid.xSize
+        {
+            if IsLocalMinima(grid,x,y)
+            {
+                PrependUIntList(&list,x+y*grid.xSize);
+            }
+        }
+    }
+}
+
+IdxToPosition:(grid:Grid,idx:UInt32)(x:UInt32,y:UInt32)=
+{
+    x=idx%grid.xSize;
+    y=idx/grid.xSize;
+}
+
+FloodGridRecurse:(grid:Grid,x:UInt32,y:UInt32,with:Int32,inSize:UInt32)(size:UInt32)=
+{
+    size=inSize;
+    idx:=x+y*grid.xSize;
+    if (grid.data[idx]==9) || (grid.data[idx]<0)
+    {
+        return;
+    }
+    size++;
+    grid.data[idx]=with;
+    if x!=0
+    {
+        size = FloodGridRecurse(grid,x-1,y,with,size).size;
+    }
+    if x<grid.xSize-1
+    {
+        size = FloodGridRecurse(grid,x+1,y,with,size).size;
+    }
+    if y!=0
+    {
+        size = FloodGridRecurse(grid,x,y-1,with,size).size;
+    }
+    if y<grid.ySize-1
+    {
+        size = FloodGridRecurse(grid,x,y+1,with,size).size;
+    }
+}
+
+FloodGrid:(grid:Grid,x:UInt32,y:UInt32,with:Int32)(size:UInt32)=
+{
+    size = FloodGridRecurse(grid,x,y,with,0);
+}
+
+BasinSizeOfBest3:(list:UIntList)(size:UInt32)=
+{
+    array:=UIntListToArray(list).array;
+    SortUIntArray(array,list.size,CompareGreater);
+
+    size=array[0]*array[1]*array[2];
+}
+
+ComparatorFunc:(a:UInt32,b:UInt32)(is:bit)
+
+CompareGreater:ComparatorFunc=
+{
+    is = a > b;
+}
+
+# Sorts in place
+SortUIntArray:(data:*UInt32,size:Int32,compare:ComparatorFunc)()=
+{
+    QuickSort(data,0,size-1, compare);
+}
+
+QuickSort:(data:*UInt32,low:Int32,high:Int32,compare:ComparatorFunc)()=
+{
+    if low < high
+    {
+        partitionIdx:=QuickSortPartition(data,low,high,compare).idx;
+
+        QuickSort(data,low,partitionIdx-1,compare);
+        QuickSort(data,partitionIdx+1,high,compare);
+    }
+}
+
+QuickSortPartition:(data:*UInt32,low:Int32,high:Int32,compare:ComparatorFunc)(idx:Int32)=
+{
+    pivot:=data[high];
+    idx=low-1;
+    iter:Int32=_;
+    for iter=low..high
+    {
+        if compare(data[iter],pivot)
+        {
+            idx++;
+            SwapElement(data,idx,iter);
+        }
+    }
+    idx++;
+    SwapElement(data,idx,high);
+}
+
+SwapElement:(data:*UInt32,a:Int32,b:Int32)()=
+{
+    xchg:=data[a];
+    data[a]=data[b];
+    data[b]=xchg;
+}
