@@ -27,7 +27,7 @@ Day4_Part1:()()=
             if score!=0
             {
                 # Winning Board
-                msg:="Day3:Part1: Board Idx %0, Score %1, Ball Value %2, answer : %3";
+                msg:="Day4:Part1: Board Idx %0, Score %1, Ball Value %2, answer : %3";
                 PrintMessage4(&msg[0] as *UInt8, boardIdx, ballValue, score, ballValue*score);
                 Assert((ballValue*score)==33462);
                 return;
@@ -64,7 +64,7 @@ Day4_Part2:()()=
                     if solvedCnt==data.bingo.cnt
                     {
                         # Losing Board
-                        msg:="Day3:Part2: Board Idx %0, Score %1, Ball Value %2, answer : %3";
+                        msg:="Day4:Part2: Board Idx %0, Score %1, Ball Value %2, answer : %3";
                         PrintMessage4(&msg[0] as *UInt8, boardIdx, ballValue, score, ballValue*score);
                         Assert((ballValue*score)==30070);
                         return;

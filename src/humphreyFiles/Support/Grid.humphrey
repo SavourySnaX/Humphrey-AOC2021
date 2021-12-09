@@ -1,0 +1,57 @@
+using System::Types
+using Support::File
+using Support::Memory
+
+Grid:
+{
+    data:*Int32
+    xSize:UInt32
+    ySize:UInt32
+}
+
+AllocateGrid:(sizeX:UInt32,sizeY:UInt32,initialise:bit)(grid:Grid)=
+{
+    oGrid:Grid=_;
+    oGrid.xSize=sizeX;
+    oGrid.ySize=sizeY;
+    toAllocate:UInt32=_;
+    oGrid.data = AllocateHeap(MemorySizeOf(toAllocate).size * sizeX * sizeY,initialise) as *Int32;
+    grid=oGrid;
+}
+
+LoadGrid:(filename:*Int8)(grid:Grid)=
+{
+    nullTerminated:=LoadTextFile(filename);
+
+    #Figure out grid size 
+    gridSizeX,gridSizeY:UInt32=0;
+    startOfGrid:=nullTerminated;
+
+    while (*nullTerminated)!=0x0A
+    {
+        gridSizeX++;
+        nullTerminated++;
+    }
+    while (*nullTerminated)!=0x00
+    {
+        if (*nullTerminated)==0x0A
+        {
+            gridSizeY++;
+        }
+        nullTerminated++;
+    }
+
+    grid=AllocateGrid(gridSizeX,gridSizeY,0).grid;
+
+    nullTerminated=startOfGrid;
+    x,y:UInt32=_;
+    for y=0..grid.ySize
+    {
+        for x=0..grid.xSize
+        {
+            value:Int32=(*nullTerminated++) - 0x30;
+            grid.data[x+y*grid.xSize]=value;
+        }
+        nullTerminated++;   # skip line terminator
+    }
+}

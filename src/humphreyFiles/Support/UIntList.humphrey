@@ -1,0 +1,97 @@
+using System::Types
+using Support::Memory
+
+# Duplicated from IntList as we don't have generics at this time
+
+UIntListNode:
+{
+    next:*UIntListNode
+    data:UInt32
+}
+
+UIntList:
+{
+    head:*UIntListNode
+    size:Int32
+}
+
+NullUIntListNode:=0 as *UIntListNode
+
+BeginUIntList:()(list:UIntList)=
+{
+    list=0;
+    list.head=NullUIntListNode;
+    list.size=0;
+}
+
+AppendUIntList:(list:*UIntList,int:UInt32)()=
+{
+    toAllocate:UIntListNode=_;
+    newNode:=AllocateHeap(MemorySizeOf(toAllocate).size,0) as *UIntListNode;
+    newNode.next=NullUIntListNode;
+    newNode.data=int;
+
+    if list.head == NullUIntListNode
+    {
+        list.head = newNode;
+    }
+    else
+    {
+        tHead:=list.head;
+        while (tHead.next!=NullUIntListNode)
+        {
+            tHead=tHead.next;
+        }
+        tHead.next=newNode;
+    }
+    list.size++;
+}
+
+PrependUIntList:(list:*UIntList,int:UInt32)()=
+{
+    toAllocate:UIntListNode=_;
+    newNode:=AllocateHeap(MemorySizeOf(toAllocate).size,0) as *UIntListNode;
+    newNode.next=NullUIntListNode;
+    newNode.data=int;
+
+    if list.head == NullUIntListNode
+    {
+        list.head = newNode;
+    }
+    else
+    {
+        newNode.next=list.head;
+        list.head=newNode;
+    }
+    list.size++;
+}
+
+UIntListToArray:(list:UIntList)(array:*UInt32)=
+{
+    a:Int32=_;
+    toAllocate:UInt32=_;
+    array=AllocateHeap(MemorySizeOf(toAllocate).size * list.size,0) as *UInt32;
+
+    tHead:=list.head;
+    for a=0..list.size
+    {
+        array[a]=tHead.data;
+        tHead=tHead.next;
+    }
+}
+
+UIntListToArrayUUInt8:(list:UIntList)(array:*UInt8)=
+{
+    a:Int32=_;
+    toAllocate:UInt8=_;
+    array=AllocateHeap(MemorySizeOf(toAllocate).size * list.size,0) as *UInt8;
+
+    tHead:=list.head;
+    for a=0..list.size
+    {
+        array[a]=tHead.data as UInt8;
+        tHead=tHead.next;
+    }
+}
+
+
