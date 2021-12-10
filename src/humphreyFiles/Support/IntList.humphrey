@@ -64,6 +64,28 @@ PrependIntList:(list:*IntList,int:Int32)()=
     list.size++;
 }
 
+PopFrontIntList:(list:*IntList)(value:Int32)=
+{
+    head:=list.head;
+    value=0;
+    if head!=NullIntListNode
+    {
+        value = head.data;
+        list.head=head.next;
+        list.size--;
+        # Free allocation
+        FreeHeap(head as *void);
+    }
+}
+
+ClearIntList:(list:*IntList)()=
+{
+    while list.size != 0
+    {
+        PopFrontIntList(list);
+    }
+}
+
 IntListToArray:(list:IntList)(array:*Int32)=
 {
     a:Int32=_;

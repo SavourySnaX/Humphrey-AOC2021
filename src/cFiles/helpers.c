@@ -11,6 +11,11 @@ void* AllocateHeap(uint64_t size, int clear)
     return ptr;
 }
 
+void FreeHeap(void* allocation)
+{
+    free(allocation);
+}
+
 char* LoadTextFile(const char* name)
 {
     FILE* f = fopen(name,"rb");

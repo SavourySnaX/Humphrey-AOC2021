@@ -7,3 +7,5 @@ void:
 [C_CALLING_CONVENTION]
 AllocateHeap:(size:UInt64,clear:bit)(allocated:*void) # Will zero allocation if clear is set
 
+[C_CALLING_CONVENTION]
+FreeHeap:(allocated:*void)() 

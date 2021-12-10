@@ -1,0 +1,54 @@
+using System::Types
+
+ComparatorFunc:(a:UInt32,b:UInt32)(is:bit)
+
+CompareGreater:ComparatorFunc=
+{
+    is = a > b;
+}
+
+CompareLess:ComparatorFunc=
+{
+    is = a < b;
+}
+
+# Sorts in place
+SortUIntArray:(data:*UInt32,size:Int32,compare:ComparatorFunc)()=
+{
+    QuickSortUInt(data,0,size-1, compare);
+}
+
+QuickSortUInt:(data:*UInt32,low:Int32,high:Int32,compare:ComparatorFunc)()=
+{
+    if low < high
+    {
+        partitionIdx:=QuickSortUIntPartition(data,low,high,compare).idx;
+
+        QuickSortUInt(data,low,partitionIdx-1,compare);
+        QuickSortUInt(data,partitionIdx+1,high,compare);
+    }
+}
+
+QuickSortUIntPartition:(data:*UInt32,low:Int32,high:Int32,compare:ComparatorFunc)(idx:Int32)=
+{
+    pivot:=data[high];
+    idx=low-1;
+    iter:Int32=_;
+    for iter=low..high
+    {
+        if compare(data[iter],pivot)
+        {
+            idx++;
+            SwapElement(data,idx,iter);
+        }
+    }
+    idx++;
+    SwapElement(data,idx,high);
+}
+
+SwapElement:(data:*UInt32,a:Int32,b:Int32)()=
+{
+    xchg:=data[a];
+    data[a]=data[b];
+    data[b]=xchg;
+}

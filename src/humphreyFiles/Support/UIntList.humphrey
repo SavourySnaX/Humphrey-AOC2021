@@ -66,6 +66,28 @@ PrependUIntList:(list:*UIntList,int:UInt32)()=
     list.size++;
 }
 
+PopFrontIntList:(list:*UIntList)(value:UInt32)=
+{
+    head:=list.head;
+    value=0;
+    if head!=NullUIntListNode
+    {
+        value = head.data;
+        list.head=head.next;
+        list.size--;
+        # Free allocation
+        FreeHeap(head as *void);
+    }
+}
+
+ClearIntList:(list:*UIntList)()=
+{
+    while list.size != 0
+    {
+        PopFrontIntList(list);
+    }
+}
+
 UIntListToArray:(list:UIntList)(array:*UInt32)=
 {
     a:Int32=_;

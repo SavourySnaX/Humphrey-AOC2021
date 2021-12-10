@@ -6,6 +6,7 @@ using Support::Printing
 using Support::Assert
 using Support::Memory
 using Support::Grid
+using Support::UIntSort
 
 Day9:()()=
 {
@@ -161,52 +162,4 @@ BasinSizeOfBest3:(list:UIntList)(size:UInt32)=
     SortUIntArray(array,list.size,CompareGreater);
 
     size=array[0]*array[1]*array[2];
-}
-
-ComparatorFunc:(a:UInt32,b:UInt32)(is:bit)
-
-CompareGreater:ComparatorFunc=
-{
-    is = a > b;
-}
-
-# Sorts in place
-SortUIntArray:(data:*UInt32,size:Int32,compare:ComparatorFunc)()=
-{
-    QuickSort(data,0,size-1, compare);
-}
-
-QuickSort:(data:*UInt32,low:Int32,high:Int32,compare:ComparatorFunc)()=
-{
-    if low < high
-    {
-        partitionIdx:=QuickSortPartition(data,low,high,compare).idx;
-
-        QuickSort(data,low,partitionIdx-1,compare);
-        QuickSort(data,partitionIdx+1,high,compare);
-    }
-}
-
-QuickSortPartition:(data:*UInt32,low:Int32,high:Int32,compare:ComparatorFunc)(idx:Int32)=
-{
-    pivot:=data[high];
-    idx=low-1;
-    iter:Int32=_;
-    for iter=low..high
-    {
-        if compare(data[iter],pivot)
-        {
-            idx++;
-            SwapElement(data,idx,iter);
-        }
-    }
-    idx++;
-    SwapElement(data,idx,high);
-}
-
-SwapElement:(data:*UInt32,a:Int32,b:Int32)()=
-{
-    xchg:=data[a];
-    data[a]=data[b];
-    data[b]=xchg;
 }
