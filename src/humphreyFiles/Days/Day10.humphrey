@@ -1,0 +1,176 @@
+using System::Types
+using Support::Types
+using Support::File
+using Support::IntList
+using Support::UInt64List
+using Support::Printing
+using Support::Assert
+using Support::UInt64Sort
+
+Day10:()()=
+{
+    Day10_Part1();
+    Day10_Part2();
+}
+
+Day10_Part1:()()=
+{
+    filename:="day10.txt";
+    file:=LoadTextFile((&filename[0]) as *Int8);
+
+    totalScore:=ScoreBrokenLines(file).totalScore;
+
+    msg:="Day10:Part1: Error Score : %0";
+    PrintMessage1(&msg[0] as *UInt8, totalScore );
+    Assert(totalScore==323613);
+}
+
+Day10_Part2:()()=
+{
+    filename:="day10.txt";
+    file:=LoadTextFile((&filename[0]) as *Int8);
+
+    completionScore:=ScoreCompletedLines(file).completionScore;
+
+    msg:="Day10:Part2: Error Score : %0";
+    PrintMessage1(&msg[0] as *UInt8, completionScore );
+    Assert(completionScore==3103006161);
+}
+
+ScoreForBrokenChar:(char:Int8)(score:Int32)=
+{
+    if char == 0x29
+    {
+        score=3;
+    }
+    if char == 0x5D
+    {
+        score=57;
+    }
+    if char == 0x7D
+    {
+        score=1197;
+    }
+    if char == 0x3E
+    {
+        score=25137;
+    }
+}
+
+# If broken score is 0, then stack contains incomplete line
+ParseLine:(file:*Int8)(stack:IntList,brokenScore:Int32,nextLine:*Int8)=
+{
+    nextLine=file;
+    stack=BeginIntList().list;
+    discard:=Bool.False;
+    brokenScore=0;
+    while (*nextLine)!=0
+    {
+        char:=*nextLine++;
+        if (char == 0x0A) | (discard == Bool.True)
+        {
+            if char == 0x0A
+            {
+                return;
+            }
+        }
+        else
+        {
+            # '(' 0x28 ')' 0x29 '<' 0x3C '>' 0x3E '[' 0x5B ']' 0x5D '{' 0x7B '}' 0x7D
+            if (char == 0x28) | (char == 0x3C) | (char == 0x5B) | (char == 0x7B)
+            {
+                PrependIntList(&stack,char);
+            }
+            else
+            {
+                popChar:=PopFrontIntList(&stack).value as Int8;
+                if (popChar == 0x28) & (char !=0x29)
+                {
+                    # Error, discard line score error
+                    discard=Bool.True;
+                    ClearIntList(&stack);
+                    brokenScore=ScoreForBrokenChar(char);
+                }
+                if (popChar == 0x3C) & (char !=0x3E)
+                {
+                    # Error, discard line score error
+                    discard=Bool.True;
+                    ClearIntList(&stack);
+                    brokenScore=ScoreForBrokenChar(char);
+                }
+                if (popChar == 0x5B) & (char !=0x5D)
+                {
+                    # Error, discard line score error
+                    discard=Bool.True;
+                    ClearIntList(&stack);
+                    brokenScore=ScoreForBrokenChar(char);
+                }
+                if (popChar == 0x7B) & (char !=0x7D)
+                {
+                    # Error, discard line score error
+                    discard=Bool.True;
+                    ClearIntList(&stack);
+                    brokenScore=ScoreForBrokenChar(char);
+                }
+            }
+        }
+    }
+}
+
+ScoreForCompletionChar:(char:Int8)(score:UInt32)=
+{
+    if char == 0x28
+    {
+        score=1;
+    }
+    if char == 0x5B
+    {
+        score=2;
+    }
+    if char == 0x7B
+    {
+        score=3;
+    }
+    if char == 0x3C
+    {
+        score=4;
+    }
+}
+
+ScoreBrokenLines:(file:*Int8)(totalScore:Int32)=
+{
+    totalScore=0;
+    while (*file)!=0
+    {
+        result:=ParseLine(file);
+        totalScore=totalScore+result.brokenScore;
+        ClearIntList(&result.stack);
+        file=result.nextLine;
+    }
+}
+
+ScoreCompletedLines:(file:*Int8)(completionScore:UInt64)=
+{
+    scores:=BeginUInt64List().list;
+    while (*file)!=0
+    {
+        result:=ParseLine(file);
+        if result.brokenScore==0
+        {
+            totalScore:UInt64=0;
+            while result.stack.size>0
+            {
+                toCloseChar:=PopFrontIntList(&result.stack).value as Int8;
+                totalScore=totalScore*5 + ScoreForCompletionChar(toCloseChar);
+            }
+            PrependUInt64List(&scores,totalScore);
+        }
+        ClearIntList(&result.stack);
+        file=result.nextLine;
+    }
+
+    scoreArray:=UInt64ListToArray(scores).array;
+    SortUInt64Array(scoreArray,scores.size,CompareLess64);
+
+    completionScore=scoreArray[scores.size/2];
+}

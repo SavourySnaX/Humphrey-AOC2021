@@ -1,0 +1,95 @@
+using System::Types
+using Support::Memory
+
+# Duplicated from IntList as we don't have generics at this time
+
+UInt64ListNode:
+{
+    next:*UInt64ListNode
+    data:UInt64
+}
+
+UInt64List:
+{
+    head:*UInt64ListNode
+    size:Int32
+}
+
+NullUInt64ListNode:=0 as *UInt64ListNode
+
+BeginUInt64List:()(list:UInt64List)=
+{
+    list=0;
+    list.head=NullUInt64ListNode;
+    list.size=0;
+}
+
+AppendUInt64List:(list:*UInt64List,int:UInt64)()=
+{
+    toAllocate:UInt64ListNode=_;
+    newNode:=AllocateHeap(MemorySizeOf(toAllocate).size,0) as *UInt64ListNode;
+    newNode.next=NullUInt64ListNode;
+    newNode.data=int;
+
+    if list.head == NullUInt64ListNode
+    {
+        list.head = newNode;
+    }
+    else
+    {
+        tHead:=list.head;
+        while (tHead.next!=NullUInt64ListNode)
+        {
+            tHead=tHead.next;
+        }
+        tHead.next=newNode;
+    }
+    list.size++;
+}
+
+PrependUInt64List:(list:*UInt64List,int:UInt64)()=
+{
+    toAllocate:UInt64ListNode=_;
+    newNode:=AllocateHeap(MemorySizeOf(toAllocate).size,0) as *UInt64ListNode;
+    newNode.next=NullUInt64ListNode;
+    newNode.data=int;
+
+    if list.head == NullUInt64ListNode
+    {
+        list.head = newNode;
+    }
+    else
+    {
+        newNode.next=list.head;
+        list.head=newNode;
+    }
+    list.size++;
+}
+
+UInt64ListToArray:(list:UInt64List)(array:*UInt64)=
+{
+    a:Int32=_;
+    toAllocate:UInt64=_;
+    array=AllocateHeap(MemorySizeOf(toAllocate).size * list.size,0) as *UInt64;
+
+    tHead:=list.head;
+    for a=0..list.size
+    {
+        array[a]=tHead.data;
+        tHead=tHead.next;
+    }
+}
+
+UInt64ListToArrayUUInt8:(list:UInt64List)(array:*UInt8)=
+{
+    a:Int32=_;
+    toAllocate:UInt8=_;
+    array=AllocateHeap(MemorySizeOf(toAllocate).size * list.size,0) as *UInt8;
+
+    tHead:=list.head;
+    for a=0..list.size
+    {
+        array[a]=tHead.data as UInt8;
+        tHead=tHead.next;
+    }
+}
