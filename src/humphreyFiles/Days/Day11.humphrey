@@ -1,0 +1,156 @@
+using System::Types
+using Support::Types
+using Support::File
+using Support::UIntList
+using Support::Printing
+using Support::Assert
+using Support::Memory
+using Support::Grid
+using Support::Math
+
+Day11:()()=
+{
+    Day11_Part1();
+    Day11_Part2();
+}
+
+Day11_Part1:()()=
+{
+    filename:="day11.txt";
+    octopi:=LoadGrid((&filename[0]) as *Int8).grid;
+    
+    flashes:=CountFlashesForIterations(&octopi,100).totalFlashes;
+    
+    msg:="Day11:Part1: Flashes : %0";
+    PrintMessage1(&msg[0] as *UInt8, flashes );
+    Assert(flashes==1585);
+}
+
+Day11_Part2:()()=
+{
+    filename:="day11.txt";
+    octopi:=LoadGrid((&filename[0]) as *Int8).grid;
+    
+    moment:=MomentOfSynchronisation(&octopi).moment;
+    
+    msg:="Day11:Part2: Moment of Synchronisation : %0";
+    PrintMessage1(&msg[0] as *UInt8, moment );
+    Assert(moment==382);
+}
+
+IncrementOctopi:(octopi:*Grid)()=
+{
+    a:UInt32=_;
+    for a=0..octopi.xSize*octopi.ySize
+    {
+        octopi.data[a]++;
+    }
+}
+
+ResetOctopi:(octopi:*Grid)()=
+{
+    a:UInt32=_;
+    for a=0..octopi.xSize*octopi.ySize
+    {
+        if octopi.data[a] < 0
+        {
+            octopi.data[a]=0;
+        }
+    }
+}
+
+IncrementBordered:(octopi:*Grid,x:UInt32,y:UInt32)(ox:UInt32,oy:UInt32)=
+{
+    sx,ex:=x;
+    sy,ey:=y;
+    if x>0
+    {
+        sx--;
+    }
+    if y>0
+    {
+        sy--;
+    }
+    if x<octopi.xSize-1
+    {
+        ex++;
+    }
+    if y<octopi.ySize-1
+    {
+        ey++;
+    }
+    ex++;
+    ey++;
+    for y=sy..ey
+    {
+        for x=sx..ex
+        {
+            octopi.data[x+y*octopi.xSize]++;
+        }
+    }
+    ox=sx;
+    oy=sy;
+}
+
+FlashOctopi:(octopi:*Grid)(flashCnt:UInt64)=
+{
+    flashCnt=0;
+    modified:=Bool.False;
+    x,y:UInt32=0;
+    while (x+y*octopi.xSize) < (octopi.xSize*octopi.ySize)
+    {
+        if octopi.data[x+y*octopi.xSize]>9
+        {
+            flashCnt++;
+            octopi.data[x+y*octopi.xSize]=Int32Constants.Minimum;
+            newPos:=IncrementBordered(octopi,x,y);
+            x=newPos.ox;
+            y=newPos.oy;
+        }
+        else
+        {
+            x++;
+            if x==octopi.xSize
+            {
+                x=0;
+                y++;
+            }
+        }
+    }
+}
+
+CountFlashesForIterations:(octopi:*Grid,iterations:Int32)(totalFlashes:UInt64)=
+{
+    a:Int32=_;
+    totalFlashes=0;
+
+    for a=0..iterations
+    {
+        IncrementOctopi(octopi);
+
+        totalFlashes=totalFlashes + FlashOctopi(octopi);
+
+        ResetOctopi(octopi);
+    }
+}
+
+MomentOfSynchronisation:(octopi:*Grid)(moment:Int32)=
+{
+    moment=1;
+
+    while Bool.True
+    {
+        IncrementOctopi(octopi);
+
+        numFlashed:=FlashOctopi(octopi).flashCnt;
+
+        if numFlashed==octopi.xSize*octopi.ySize
+        {
+            return;
+        }
+
+        ResetOctopi(octopi);
+
+        moment++;
+    }
+}

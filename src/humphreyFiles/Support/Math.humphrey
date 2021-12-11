@@ -1,6 +1,13 @@
 
 using System::Types
 
+Int32Constants:Int32
+{
+    Minimum:=0x8000_0000 as Int32
+    Zero:=0
+    Maximum:=0x7FFF_FFFF
+}
+
 MaxUInt32:(a:UInt32,b:UInt32)(result:UInt32)=
 {
     if (a>b)
