@@ -27,6 +27,8 @@ DebugFormatXNybblesAtPtrNoNull:(value:UInt64, ptr:*UInt8, numNybbles:UInt64)(nul
 
 [C_CALLING_CONVENTION]
 PrintMessageC:(msg:*UInt8)()
+[C_CALLING_CONVENTION]
+PrintMessage:(msg:*UInt8)()
 
 PrintMsgArray:(message:*UInt8,params:*UInt64)()=
 {

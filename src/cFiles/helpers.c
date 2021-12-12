@@ -38,6 +38,11 @@ void PrintMessageC(const char* msg)
     printf("%s\n",msg);
 }
 
+void PrintMessage(const char* msg)
+{
+    printf("%s", msg);
+}
+
 int main(int argc,char** argv)
 {
     Days();
