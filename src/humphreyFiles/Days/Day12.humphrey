@@ -1,0 +1,167 @@
+using System::Types
+using Support::Types
+using Support::File
+using Support::UInt64List
+using Support::Printing
+using Support::Assert
+using Support::Memory
+using Support::Grid
+using Support::Math
+
+Day12:()()=
+{
+    Day12_Part1();
+    Day12_Part2();
+}
+
+Day12_Part1:()()=
+{
+    filename:="day12.txt";
+    caves:=LoadGraph((&filename[0]) as *Int8).caves;
+    
+    pathCnt:=ExploreCaves(caves,0).uniquePathsCnt;
+
+    msg:="Day12:Part1: Num Paths : %0";
+    PrintMessage1(&msg[0] as *UInt8, pathCnt );
+    Assert(pathCnt==5958);
+}
+
+Day12_Part2:()()=
+{
+    filename:="day12.txt";
+    caves:=LoadGraph((&filename[0]) as *Int8).caves;
+    
+    pathCnt:=ExploreCaves(caves,1).uniquePathsCnt;
+
+    msg:="Day12:Part2: Num Paths : %0";
+    PrintMessage1(&msg[0] as *UInt8, pathCnt );
+    Assert(pathCnt==150426);
+}
+
+Explore:(caves:*Cavern,idx:CaveIndex,singleReenter:bit)(cntOut:UInt32)=
+{
+    cntOut=0;
+    a:UInt32=_;
+    if (idx.raw==0) | (IsAsciiLowerCaseCharacter(idx.a as Int8))
+    {
+        caves[idx.raw].visited++;
+    }
+    for a = 0 .. caves[idx.raw].numCaves
+    {
+        nextIdx:=caves[idx.raw].caves[a];
+        shouldReenter:bit=((caves[nextIdx.raw].visited>0) & (singleReenter) & (nextIdx.raw!=0));
+        shouldVisit:bit=(caves[nextIdx.raw].visited==0)|shouldReenter;
+        if shouldVisit
+        {
+            if nextIdx.raw == 0xFFFF
+            {
+                cntOut++;
+            }
+            else
+            {
+                cntOut=cntOut + Explore(caves,nextIdx,singleReenter & (~shouldReenter));
+            }
+        }
+    }
+    if (idx.raw==0) | (IsAsciiLowerCaseCharacter(idx.a as Int8))
+    {
+        caves[idx.raw].visited--;
+    }
+}
+
+ExploreCaves:(caves:*Cavern,allowSingleCaveTwice:bit)(uniquePathsCnt:UInt32)=
+{
+    currentIdx:CaveIndex=0; # Start
+
+    uniquePathsCnt=Explore(caves,currentIdx,allowSingleCaveTwice);
+}
+
+Cavern:
+{
+    caves:*CaveIndex
+    numCaves:UInt32
+    visited:UInt32
+}
+
+CaveIndex:UInt16
+|{
+    a:UInt8
+    b:UInt8
+}
+
+ParseCaveIdx:(file:*Int8,endMarker:Int8)(idx:CaveIndex,remain:*Int8)=
+{
+    startOfCave:=file;
+    while (*file)!=endMarker
+    {
+        file++;
+    }
+    length:=(file as UInt64)-(startOfCave as UInt64);
+
+    if length==2
+    {
+        idx.a=startOfCave[0] as UInt8;
+        idx.b=startOfCave[1] as UInt8;
+    }
+    if length==3
+    {
+        idx.raw = 0xFFFF;   # End of cave
+    }
+    if length==5
+    {
+        idx.raw=0;    # Start of cave
+    }
+    remain=++file;
+}
+
+ParsePair:(file:*Int8)(idxA:CaveIndex,idxB:CaveIndex,remain:*Int8)=
+{
+    first:=ParseCaveIdx(file,0x2D);
+    second:=ParseCaveIdx(first.remain,0x0A);
+    remain=second.remain;
+    idxA=first.idx;
+    idxB=second.idx;
+}
+
+LoadGraph:(name:*Int8)(caves:*Cavern)=
+{
+    toAllocate:Cavern=_;
+    totalHashes:Int32=0x10000;  # Most will be unused, but simplifies logic
+    toAllocateCount:UInt32=_;
+    caves=AllocateHeap(MemorySizeOf(toAllocate).size * totalHashes,1) as *Cavern;
+    counts:=AllocateHeap(MemorySizeOf(toAllocateCount).size * totalHashes,1) as *UInt32;
+    file:=LoadTextFile(name);
+    startOfFile:=file;
+
+    # Count number of paths needed per cavern
+    while (*file)!=0
+    {
+        result:=ParsePair(file);
+        counts[result.idxA.raw]++;
+        counts[result.idxB.raw]++;
+        file=result.remain;
+    }
+
+    # Load caverns
+    file=startOfFile;
+    while (*file)!=0
+    {
+        result:=ParsePair(file);
+        
+        AddRoute(&caves[result.idxA.raw],counts[result.idxA.raw],result.idxB);
+        AddRoute(&caves[result.idxB.raw],counts[result.idxB.raw],result.idxA);
+
+        file=result.remain;
+    }
+    FreeHeap(counts as *void);
+}
+
+AddRoute:(cave:*Cavern,count:UInt32,otherCaveIdx:CaveIndex)()=
+{
+    if cave.caves == (0 as *CaveIndex)
+    {
+        toAllocateCavePtr:CaveIndex=_;
+        cave.caves = AllocateHeap(MemorySizeOf(toAllocateCavePtr).size * count,0) as *CaveIndex;
+    }
+    cave.caves[cave.numCaves++]=otherCaveIdx;
+}
