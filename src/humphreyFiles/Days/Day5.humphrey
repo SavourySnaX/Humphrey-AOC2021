@@ -141,17 +141,6 @@ Lines:
     maxY:UInt32
 }
 
-ParseUInt32FromAscii:(input:*Int8)(uint:UInt32,newPtr:*Int8)=
-{
-    uint=0;
-    while IsAsciiNumberCharacter(*input)
-    {
-        uint=uint*10 + ((*input)-0x30);
-        input++;
-    }
-    newPtr=input;
-}
-
 LoadLines:(filename:*Int8)(lines:Lines)=
 {
     oLines:Lines=_; # Work around issue in compiler that can't spot a struct is fully assigned in an output yet

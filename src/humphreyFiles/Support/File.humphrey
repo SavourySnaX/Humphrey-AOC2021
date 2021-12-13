@@ -15,6 +15,28 @@ IsAsciiLowerCaseCharacter:(char:Int8)(answer:bit)=
     answer = (char>=0x61) && (char<=0x7A);
 }
 
+ParseInt32FromAscii:(input:*Int8)(int:Int32,newPtr:*Int8)=
+{
+    int=0;
+    while IsAsciiNumberCharacter(*input)
+    {
+        int=int*10 + ((*input)-0x30);
+        input++;
+    }
+    newPtr=input;
+}
+
+ParseUInt32FromAscii:(input:*Int8)(uint:UInt32,newPtr:*Int8)=
+{
+    uint=0;
+    while IsAsciiNumberCharacter(*input)
+    {
+        uint=uint*10 + ((*input)-0x30);
+        input++;
+    }
+    newPtr=input;
+}
+
 # Handles bases 1-10 for now
 LoadIntFile:(filename:*Int8,base:Int32)(array:*Int32,cnt:Int32)=
 {
