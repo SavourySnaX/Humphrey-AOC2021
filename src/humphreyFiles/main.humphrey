@@ -10,6 +10,7 @@ using Days::Day9
 using Days::Day10
 using Days::Day11
 using Days::Day12
+using Days::Day13
 
 #NB Currently I`m not freeing any heap allocations, I'm fine with that.
 
@@ -27,4 +28,5 @@ Days:()()=
     Day10();
     Day11();
     Day12();
+    Day13();
 }

@@ -1,0 +1,265 @@
+using System::Types
+using Support::Types
+using Support::Printing
+using Support::File
+using Support::Assert
+using Support::UIntList
+using Support::Memory
+using Support::Math
+using Support::Grid
+
+Day13:()()=
+{
+    Day13_Part1();
+    Day13_Part2();
+}
+
+Day13_Part1:()()=
+{
+    filename:="day13.txt";
+    result:=LoadDotsAndFolds(&filename as *Int8);
+
+    # we can assume grid is from 0.. in both directions (checked against data)
+    sizeX:=result.maxX + 1;
+    sizeY:=result.maxY + 1;
+    grid:=AllocateGrid(sizeX as UInt32, sizeY as UInt32, 1).grid;
+
+    PlotDots(grid,result.dots,result.dotsCnt);
+    FoldGrid(&grid,result.folds[0]);
+    visible:=CountDots(grid).cnt;
+
+    msg:="Day13:Part1: Num dots visible : %0";
+    PrintMessage1(&msg[0] as *UInt8, visible);
+    Assert(visible==770);
+}
+
+Day13_Part2:()()=
+{
+    filename:="day13.txt";
+    result:=LoadDotsAndFolds(&filename as *Int8);
+
+    # we can assume grid is from 0.. in both directions (checked against data)
+    sizeX:=result.maxX + 1;
+    sizeY:=result.maxY + 1;
+    grid:=AllocateGrid(sizeX as UInt32, sizeY as UInt32, 1).grid;
+
+    PlotDots(grid,result.dots,result.dotsCnt);
+    a:Int32=_;
+    for a=0..result.foldsCnt
+    {
+        FoldGrid(&grid,result.folds[a]);
+    }
+    
+    msg:="Day13:Part2: ";
+    PrintMessageC(&msg[0] as *UInt8);
+    PrintGrid(grid);
+
+    resultCheck:="####.###..#..#.####.#....###..###..###..#....#..#.#..#.#....#....#..#.#..#.#..#.###..#..#.#..#.###..#....#..#.###..#..#.#....###..#..#.#....#....###..#..#.###..#....#....#..#.#....#....#....#..#.#.#..####.#.....##..####.####.#....###..#..#.";
+    Assert(VerifyGrid(grid,&resultCheck[0] as *Int8));
+}
+
+VerifyGrid:(grid:Grid,result:*Int8)(match:bit)=
+{
+    x,y:UInt32=_;
+    match=0;
+    for y=0..grid.ySize
+    {
+        for x=0..grid.xSize
+        {
+            matchValue:Int32=((*result++)==0x23);
+            if grid.data[x+y*grid.stride]!=matchValue
+            {
+                return;
+            }
+        }
+    }
+    match=1;
+}
+
+PrintGrid:(grid:Grid)()=
+{
+    x,y:UInt32=_;
+    for y=0..grid.ySize
+    {
+        for x=0..grid.xSize
+        {
+            if grid.data[x+y*grid.stride]==1
+            {
+                dot:="#";
+                PrintMessage(&dot[0] as *UInt8);
+            }
+            else
+            {
+                dot:=".";
+                PrintMessage(&dot[0] as *UInt8);
+            }
+        }
+        newLine:="\n";
+        PrintMessage(&newLine[0] as *UInt8);
+    }
+}
+
+Dot:
+{
+    x,y:UInt32
+}
+
+Fold:
+{
+    start:UInt32
+    isYFold:Bool
+}
+
+LoadDotsAndFolds:(filename:*Int8)(dots:*Dot,dotsCnt:Int32,folds:*Fold,foldsCnt:Int32,maxX:UInt32,maxY:UInt32)=
+{
+    nullTerminated:=LoadTextFile(filename);
+    startLines:=nullTerminated;
+    # Assumes no errors in the file
+
+    x:=BeginUIntList().list; # Generics needed again, really want a list of dots :(
+    y:=BeginUIntList().list;
+
+    f:=BeginUIntList().list; # Similarly really want an array of folds
+    s:=BeginUIntList().list;
+
+    while (*nullTerminated)!=0x0A
+    {
+        result:=ParseUInt32FromAscii(nullTerminated);
+        AppendUIntList(&x,result.uint);
+        nullTerminated=result.newPtr;
+        nullTerminated++;   # skip ,
+        result=ParseUInt32FromAscii(nullTerminated);
+        AppendUIntList(&y,result.uint);
+        nullTerminated=result.newPtr;
+        nullTerminated++;   # skip 0x0A
+    }
+    nullTerminated++; # skip 0x0A
+    while (*nullTerminated)!=0
+    {
+        foldAlong:="fold along ";
+        nullTerminated=ConsumeChars(nullTerminated,&foldAlong as *Int8).newPtr;
+        AppendUIntList(&f,*nullTerminated);
+        nullTerminated++;   # skip x/y
+        nullTerminated++;   # skip =
+        result:=ParseUInt32FromAscii(nullTerminated);
+        AppendUIntList(&s,result.uint);
+        nullTerminated=result.newPtr;
+        nullTerminated++;   # skip 0x0A
+    }
+
+    toAllocateDots:Dot=_;
+    toAllocateFolds:Fold=_;
+    dots=AllocateHeap(MemorySizeOf(toAllocateDots).size * x.size,0) as *Dot;
+    folds=AllocateHeap(MemorySizeOf(toAllocateFolds).size * f.size,0) as *Fold;
+    dotsCnt=x.size;
+    foldsCnt=f.size;
+
+    a:Int32=_;
+    headX:=x.head;
+    headY:=y.head;
+    maxX=UInt32Constants.Minimum;
+    maxY=UInt32Constants.Minimum;
+    for a=0..x.size
+    {
+        dots[a].x = headX.data;
+        dots[a].y = headY.data;
+        maxX=MaxUInt32(maxX,headX.data);
+        maxY=MaxUInt32(maxY,headY.data);
+        headX=headX.next;
+        headY=headY.next;
+    }
+    headF:=f.head;
+    headS:=s.head;
+    for a=0..f.size
+    {
+        folds[a].start=headS.data;
+        folds[a].isYFold=headF.data==0x79;
+        if headF.data==0x79
+        {
+            maxY=MaxUInt32(maxY,headS.data);
+        }
+        else
+        {
+            maxX=MaxUInt32(maxX,headS.data);
+        }
+        headF=headF.next;
+        headS=headS.next;
+    }
+}
+
+ConsumeChars:(chars:*Int8,match:*Int8)(newPtr:*Int8)=
+{
+    newPtr=chars;
+    while (*newPtr)==(*match)
+    {
+        newPtr++;
+        match++;
+    }
+}
+
+PlotDots:(grid:Grid,dots:*Dot,dotsCnt:Int32)()=
+{
+    a:Int32=_;
+    for a=0..dotsCnt
+    {
+        dot:=dots[a];
+        grid.data[dot.x+dot.y*grid.stride]=1;
+    }
+}
+
+CountDots:(grid:Grid)(cnt:UInt64)=
+{
+    x,y:UInt32=_;
+    cnt=0;
+    for y=0..grid.ySize
+    {
+        for x=0..grid.xSize
+        {
+            cnt = cnt + grid.data[x+y*grid.stride];
+        }
+    }
+}
+
+FoldGrid:(grid:*Grid,fold:Fold)()=
+{
+    if fold.isYFold
+    {
+        FoldGridY(grid,fold.start);
+    }
+    else
+    {
+        FoldGridX(grid,fold.start);
+    }
+}
+
+FoldGridY:(grid:*Grid,foldAt:UInt32)()=
+{
+    x,y:UInt32=_;
+    for y=foldAt+1..grid.ySize
+    {
+        for x=0..grid.xSize
+        {
+            newY:=foldAt - (y - foldAt);
+            sLoc:=x + y*grid.stride;
+            dLoc:=x + newY*grid.stride;
+            grid.data[dLoc]=grid.data[dLoc]|grid.data[sLoc];
+        }
+    }
+    grid.ySize=grid.ySize/2;
+}
+
+FoldGridX:(grid:*Grid,foldAt:UInt32)()=
+{
+    x,y:UInt32=_;
+    for x=foldAt+1..grid.xSize
+    {
+        for y=0..grid.ySize
+        {
+            newX:=foldAt - (x - foldAt);
+            sLoc:=x + y*grid.stride;
+            dLoc:=newX + y*grid.stride;
+            grid.data[dLoc]=grid.data[dLoc]|grid.data[sLoc];
+        }
+    }
+    grid.xSize=grid.xSize/2;
+}
